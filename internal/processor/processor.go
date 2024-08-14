@@ -87,10 +87,14 @@ func (r *RenovateTaskConfig) CreateTask(client *github.Client, installation *git
 		Repositories: []string{repo.GetName()},
 	})
 	if err != nil {
-		fmt.Errorf("error creating installation token: %v", err)
+		fmt.Printf("error creating installation token: %v\n", err)
 		return
 	}
 
 	repository := fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName())
-	_ = aws_helper.RunTask(r.ClusterName, r.TaskDefinition, token.GetToken(), repository, r.AssignPublicIP)
+	_, err = aws_helper.RunTask(r.ClusterName, r.TaskDefinition, token.GetToken(), repository, r.AssignPublicIP)
+	if err != nil {
+		fmt.Printf("error running task: %v\n", err)
+		return
+	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"log"
 )
 
 func GetSecret(secretID string) (string, error) {
@@ -32,20 +31,20 @@ func GetSecret(secretID string) (string, error) {
 	return secretString, nil
 }
 
-func RunTask(cluster string, taskDefinition string, installationToken string, repository string, publicIP bool) error {
+func RunTask(cluster string, taskDefinition string, installationToken string, repository string, publicIP bool) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatalf("unable to load SDK config, %v", err)
+		return nil, err
 	}
 
 	svc := ecs.NewFromConfig(cfg)
 
 	subnets, err := filterSubnets()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if subnets == nil {
-		return fmt.Errorf("no subnets found")
+		return nil, fmt.Errorf("no subnets found")
 	}
 
 	assignPublicIP := types.AssignPublicIpDisabled
@@ -84,11 +83,10 @@ func RunTask(cluster string, taskDefinition string, installationToken string, re
 
 	runTaskOutput, err := svc.RunTask(context.TODO(), runTaskInput)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_ = runTaskOutput
-	return nil
+	return runTaskOutput, nil
 }
 
 func filterSubnets() ([]string, error) {
