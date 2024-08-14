@@ -7,6 +7,9 @@ import (
 	"renovate-controller/internal/processor"
 )
 
+var clusterName string
+var taskDefinition string
+
 func init() {
 	rootCmd.AddCommand(runCmd)
 }
@@ -22,6 +25,9 @@ func init() {
 	runCmd.Flags().StringVarP(&applicationId, "appId", "a", "", "GitHub Application ID")
 	runCmd.Flags().StringVarP(&applicationPEM, "pem", "p", "", "GitHub Application Private Key File")
 	runCmd.Flags().StringVarP(&endpoint, "endpoint", "e", "", "GitHub Endpoint")
+
+	runCmd.Flags().StringVarP(&clusterName, "cluster", "c", "", "ECS Cluster Name")
+	runCmd.Flags().StringVarP(&taskDefinition, "task", "t", "", "Task Definition Name")
 }
 
 func runCommand(cmd *cobra.Command, args []string) {
@@ -31,7 +37,13 @@ func runCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	err = processor.RunRenovateTasks(applicationId, privateKey, endpoint)
+	config := &processor.RenovateTaskConfig{
+		TaskDefinition: taskDefinition,
+		ClusterName:    clusterName,
+		AssignPublicIP: true,
+	}
+
+	err = processor.RunRenovateTasks(applicationId, privateKey, endpoint, config)
 	if err != nil {
 		fmt.Printf("Error running renovate: %v\n", err)
 		return

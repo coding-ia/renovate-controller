@@ -98,7 +98,7 @@ func FilterInstallation(client *github.Client, targetRepo string) (*github.Insta
 	return nil, nil
 }
 
-type processFunc func(*github.Installation, *github.Repository)
+type processFunc func(*github.Client, *github.Installation, *github.Repository)
 
 func ProcessAllInstallationRepositories(client *github.Client, processor processFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
@@ -124,7 +124,7 @@ func ProcessAllInstallationRepositories(client *github.Client, processor process
 				}
 
 				for _, repo := range repos.Repositories {
-					processor(installation, repo)
+					processor(client, installation, repo)
 				}
 
 				if repoResp.NextPage == 0 {
