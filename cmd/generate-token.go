@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"renovate-controller/internal/processor"
 
 	"github.com/spf13/cobra"
@@ -31,9 +30,9 @@ func init() {
 }
 
 func generateTokenCommand(cmd *cobra.Command, args []string) {
-	privateKey, err := os.ReadFile(applicationPEM)
+	privateKey, err := parsePrivateKey()
 	if err != nil {
-		fmt.Printf("Error reading private key: %v\n", err)
+		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
 	}
 

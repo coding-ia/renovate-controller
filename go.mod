@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.175.0
 	github.com/aws/aws-sdk-go-v2/service/ecs v1.44.3
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.4
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-github/v55 v55.0.0
 	github.com/spf13/cobra v1.8.1

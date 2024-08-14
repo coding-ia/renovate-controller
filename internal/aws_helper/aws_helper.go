@@ -9,8 +9,28 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"log"
 )
+
+func GetSecret(secretID string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return "", err
+	}
+
+	svc := secretsmanager.NewFromConfig(cfg)
+
+	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretID),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	secretString := aws.ToString(result.SecretString)
+	return secretString, nil
+}
 
 func RunTask(cluster string, taskDefinition string, installationToken string, repository string, publicIP bool) error {
 	cfg, err := config.LoadDefaultConfig(context.TODO())

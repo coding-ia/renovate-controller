@@ -8,6 +8,7 @@ import (
 
 var applicationId string
 var applicationPEM string
+var applicationPEMSecret string
 var endpoint string
 
 var rootCmd = &cobra.Command{

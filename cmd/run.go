@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"renovate-controller/internal/aws_helper"
 	"renovate-controller/internal/processor"
 )
 
@@ -24,6 +25,7 @@ var runCmd = &cobra.Command{
 func init() {
 	runCmd.Flags().StringVarP(&applicationId, "appId", "a", "", "GitHub Application ID")
 	runCmd.Flags().StringVarP(&applicationPEM, "pem", "p", "", "GitHub Application Private Key File")
+	runCmd.Flags().StringVarP(&applicationPEMSecret, "pem-aws-secret", "s", "", "GitHub Application Private Key (Secrets Manager)")
 	runCmd.Flags().StringVarP(&endpoint, "endpoint", "e", "", "GitHub Endpoint")
 
 	runCmd.Flags().StringVarP(&clusterName, "cluster", "c", "", "ECS Cluster Name")
@@ -31,9 +33,9 @@ func init() {
 }
 
 func runCommand(cmd *cobra.Command, args []string) {
-	privateKey, err := os.ReadFile(applicationPEM)
+	privateKey, err := parsePrivateKey()
 	if err != nil {
-		fmt.Printf("Error reading private key: %v\n", err)
+		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
 	}
 
@@ -48,4 +50,20 @@ func runCommand(cmd *cobra.Command, args []string) {
 		fmt.Printf("Error running renovate: %v\n", err)
 		return
 	}
+}
+
+func parsePrivateKey() ([]byte, error) {
+	if applicationPEMSecret != "" {
+		secret, err := aws_helper.GetSecret(applicationPEMSecret)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(secret), nil
+	}
+
+	privateKey, err := os.ReadFile(applicationPEM)
+	if err != nil {
+		return nil, err
+	}
+	return privateKey, nil
 }
