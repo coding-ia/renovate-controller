@@ -54,10 +54,11 @@ func createClient(token string, endpoint string) (*github.Client, error) {
 	tc := oauth2.NewClient(context.Background(), ts)
 
 	var client *github.Client
-	if endpoint == "" {
+	if endpoint == "" || endpoint == "api.github.com" {
 		client = github.NewClient(tc)
 	} else {
-		endpointUrl, err := url.Parse(endpoint)
+
+		endpointUrl, err := url.Parse(fmt.Sprintf("https://%s/api/v3/", endpoint))
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +103,7 @@ func filterInstallation(client *github.Client, targetRepo string) (*github.Insta
 				return nil, err
 			}
 
-			installationTS := oauth2.StaticTokenSource(
-				&oauth2.Token{AccessToken: token.GetToken()},
-			)
-			installationClient := github.NewClient(oauth2.NewClient(context.Background(), installationTS))
+			installationClient, _ := createClient(token.GetToken(), client.BaseURL.Host)
 
 			repoOpts := &github.ListOptions{PerPage: 10}
 			for {
