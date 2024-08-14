@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"renovate-controller/internal/github_helper"
+	"renovate-controller/internal/processor"
 
 	"github.com/spf13/cobra"
 )
@@ -12,9 +12,6 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 }
 
-var applicationId string
-var applicationPEM string
-var endpoint string
 var owner string
 var repository string
 
@@ -40,7 +37,7 @@ func generateTokenCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	token, err := github_helper.GenerateInstallationToken(applicationId, privateKey, endpoint, owner, repository)
+	token, err := processor.GenerateInstallationToken(applicationId, privateKey, endpoint, owner, repository)
 	if err != nil {
 		fmt.Println(err)
 		return

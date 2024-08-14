@@ -11,43 +11,7 @@ import (
 	"time"
 )
 
-func GenerateInstallationToken(applicationID string, privateKey []byte, endpoint string, owner string, repository string) (string, error) {
-	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	tokenString, err := generateJWT(applicationID, parsedKey)
-	if err != nil {
-		return "", fmt.Errorf("error generating JWT: %v", err)
-	}
-
-	client, err := createClient(tokenString, endpoint)
-	if err != nil {
-		return "", fmt.Errorf("error creating github client: %v", err)
-	}
-
-	repo := fmt.Sprintf("%s/%s", owner, repository)
-	installation, err := filterInstallation(client, repo)
-	if err != nil {
-		return "", fmt.Errorf("error finding installation: %v", err)
-	}
-
-	if installation == nil {
-		return "", fmt.Errorf("no installation found for %s", repo)
-	}
-
-	token, _, err := client.Apps.CreateInstallationToken(context.Background(), installation.GetID(), &github.InstallationTokenOptions{
-		Repositories: []string{repository},
-	})
-	if err != nil {
-		return "", fmt.Errorf("error creating installation token: %v", err)
-	}
-
-	return token.GetToken(), nil
-}
-
-func createClient(token string, endpoint string) (*github.Client, error) {
+func CreateClient(token string, endpoint string) (*github.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -71,7 +35,7 @@ func createClient(token string, endpoint string) (*github.Client, error) {
 	return client, nil
 }
 
-func generateJWT(applicationID string, privateKey *rsa.PrivateKey) (string, error) {
+func GenerateJWT(applicationID string, privateKey *rsa.PrivateKey) (string, error) {
 	// Create the claims
 	claims := jwt.MapClaims{
 		"iat": time.Now().Unix(),                      // Issued at time
@@ -89,7 +53,7 @@ func generateJWT(applicationID string, privateKey *rsa.PrivateKey) (string, erro
 	return tokenString, nil
 }
 
-func filterInstallation(client *github.Client, targetRepo string) (*github.Installation, error) {
+func FilterInstallation(client *github.Client, targetRepo string) (*github.Installation, error) {
 	opts := &github.ListOptions{PerPage: 10}
 	for {
 		installations, resp, err := client.Apps.ListInstallations(context.Background(), opts)
@@ -103,7 +67,7 @@ func filterInstallation(client *github.Client, targetRepo string) (*github.Insta
 				return nil, err
 			}
 
-			installationClient, _ := createClient(token.GetToken(), client.BaseURL.Host)
+			installationClient, _ := CreateClient(token.GetToken(), client.BaseURL.Host)
 
 			repoOpts := &github.ListOptions{PerPage: 10}
 			for {
@@ -132,4 +96,49 @@ func filterInstallation(client *github.Client, targetRepo string) (*github.Insta
 	}
 
 	return nil, nil
+}
+
+type processFunc func(*github.Installation, *github.Repository)
+
+func ProcessAllInstallationRepositories(client *github.Client, processor processFunc) error {
+	opts := &github.ListOptions{PerPage: 10}
+	for {
+		installations, resp, err := client.Apps.ListInstallations(context.Background(), opts)
+		if err != nil {
+			return err
+		}
+
+		for _, installation := range installations {
+			token, _, err := client.Apps.CreateInstallationToken(context.Background(), installation.GetID(), nil)
+			if err != nil {
+				return err
+			}
+
+			installationClient, _ := CreateClient(token.GetToken(), client.BaseURL.Host)
+
+			repoOpts := &github.ListOptions{PerPage: 10}
+			for {
+				repos, repoResp, err := installationClient.Apps.ListRepos(context.Background(), repoOpts)
+				if err != nil {
+					return err
+				}
+
+				for _, repo := range repos.Repositories {
+					processor(installation, repo)
+				}
+
+				if repoResp.NextPage == 0 {
+					break
+				}
+				repoOpts.Page = repoResp.NextPage
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return nil
 }
