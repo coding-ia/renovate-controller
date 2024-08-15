@@ -6,11 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var applicationId string
-var applicationPEM string
-var applicationPEMSecret string
-var endpoint string
-
 var rootCmd = &cobra.Command{
 	Use:   "renovate-controller",
 	Short: "A brief description of your application",

@@ -10,10 +10,6 @@ import (
 	"renovate-controller/internal/processor"
 )
 
-func init() {
-	rootCmd.AddCommand(runCmd)
-}
-
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run renovate",
@@ -35,6 +31,8 @@ func init() {
 	mapEnvToFlag(runCmd, "endpoint", "GITHUB_ENDPOINT")
 	mapEnvToFlag(runCmd, "cluster", "AWS_ECS_CLUSTER_NAME")
 	mapEnvToFlag(runCmd, "task", "AWS_ECS_CLUSTER_TASK")
+
+	rootCmd.AddCommand(runCmd)
 }
 
 func runCommand(cmd *cobra.Command, args []string) {
