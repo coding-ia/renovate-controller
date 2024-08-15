@@ -58,8 +58,7 @@ func runCommand(cmd *cobra.Command, args []string) {
 
 	err = processor.RunRenovateTasks(appId, privateKey, githubEndpoint, config)
 	if err != nil {
-		fmt.Printf("Error running renovate: %v\n", err)
-		return
+		log.Fatal(err)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v55/github"
+	"log"
 	"renovate-controller/internal/aws_helper"
 	"renovate-controller/internal/github_helper"
 )
@@ -47,9 +48,11 @@ type RenovateTaskConfig struct {
 
 func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installationToken string) {
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
+
+	log.Printf("Creating renovate task for %s", repo)
 	_, err := aws_helper.RunTask(r.ClusterName, r.TaskDefinition, installationToken, repo, r.AssignPublicIP)
 	if err != nil {
-		fmt.Printf("error running task: %v\n", err)
+		log.Printf("error running task: %v", err)
 		return
 	}
 }
