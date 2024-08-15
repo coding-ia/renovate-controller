@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"log"
 )
 
 func GetSecret(secretID string) (string, error) {
@@ -55,8 +56,13 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 	}
 
 	assignPublicIP := types.AssignPublicIpDisabled
+	securityGroups, err := filterSecurityGroups()
 	if taskConfig.PublicIP {
 		assignPublicIP = types.AssignPublicIpEnabled
+	} else {
+		if securityGroups == nil {
+			log.Printf("No security groups found and public IP disabled.")
+		}
 	}
 
 	runTaskInput := &ecs.RunTaskInput{
@@ -67,6 +73,7 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 			AwsvpcConfiguration: &types.AwsVpcConfiguration{
 				AssignPublicIp: assignPublicIP,
 				Subnets:        subnets,
+				SecurityGroups: securityGroups,
 			},
 		},
 		Overrides: &types.TaskOverride{
@@ -124,4 +131,34 @@ func filterSubnets() ([]string, error) {
 	}
 
 	return subnetIDs, nil
+}
+
+func filterSecurityGroups() ([]string, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	ec2Client := ec2.NewFromConfig(cfg)
+
+	filters := []ec2types.Filter{
+		{
+			Name:   aws.String("tag:renovate"),
+			Values: []string{"true"},
+		},
+	}
+
+	result, err := ec2Client.DescribeSecurityGroups(context.TODO(), &ec2.DescribeSecurityGroupsInput{
+		Filters: filters,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var securityGroupIDs []string
+	for _, sg := range result.SecurityGroups {
+		securityGroupIDs = append(securityGroupIDs, *sg.GroupId)
+	}
+
+	return securityGroupIDs, nil
 }
