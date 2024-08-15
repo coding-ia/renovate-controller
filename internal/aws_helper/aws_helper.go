@@ -31,7 +31,14 @@ func GetSecret(secretID string) (string, error) {
 	return secretString, nil
 }
 
-func RunTask(cluster string, taskDefinition string, installationToken string, repository string, publicIP bool) (*ecs.RunTaskOutput, error) {
+type RunTaskConfig struct {
+	Cluster   string
+	Task      string
+	Container string
+	PublicIP  bool
+}
+
+func RunTask(taskConfig RunTaskConfig, installationToken string, repository string) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -48,13 +55,13 @@ func RunTask(cluster string, taskDefinition string, installationToken string, re
 	}
 
 	assignPublicIP := types.AssignPublicIpDisabled
-	if publicIP {
+	if taskConfig.PublicIP {
 		assignPublicIP = types.AssignPublicIpEnabled
 	}
 
 	runTaskInput := &ecs.RunTaskInput{
-		Cluster:        aws.String(cluster),
-		TaskDefinition: aws.String(taskDefinition),
+		Cluster:        aws.String(taskConfig.Cluster),
+		TaskDefinition: aws.String(taskConfig.Task),
 		LaunchType:     types.LaunchTypeFargate,
 		NetworkConfiguration: &types.NetworkConfiguration{
 			AwsvpcConfiguration: &types.AwsVpcConfiguration{
@@ -65,7 +72,7 @@ func RunTask(cluster string, taskDefinition string, installationToken string, re
 		Overrides: &types.TaskOverride{
 			ContainerOverrides: []types.ContainerOverride{
 				{
-					Name: aws.String("renovate"),
+					Name: aws.String(taskConfig.Container),
 					Environment: []types.KeyValuePair{
 						{
 							Name:  aws.String("RENOVATE_TOKEN"),

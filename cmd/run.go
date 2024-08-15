@@ -24,6 +24,8 @@ func init() {
 	runCmd.Flags().StringP("endpoint", "e", "", "GitHub Endpoint")
 	runCmd.Flags().StringP("cluster", "c", "", "ECS Cluster Name")
 	runCmd.Flags().StringP("task", "t", "", "Task Definition Name")
+	runCmd.Flags().String("container-name", "renovate", "Task Container Name")
+	runCmd.Flags().Bool("publicIP", false, "Assign Public IP to Task")
 
 	mapEnvToFlag(runCmd, "appId", "GITHUB_APP_ID")
 	mapEnvToFlag(runCmd, "pem", "GITHUB_APP_PRIVATE_KEY_FILE")
@@ -31,6 +33,8 @@ func init() {
 	mapEnvToFlag(runCmd, "endpoint", "GITHUB_ENDPOINT")
 	mapEnvToFlag(runCmd, "cluster", "AWS_ECS_CLUSTER_NAME")
 	mapEnvToFlag(runCmd, "task", "AWS_ECS_CLUSTER_TASK")
+	mapEnvToFlag(runCmd, "container-name", "AWS_ECS_CLUSTER_TASK_CONTAINER_NAME")
+	mapEnvToFlag(runCmd, "publicIP", "AWS_ECS_TASK_PUBLIC_IP")
 
 	rootCmd.AddCommand(runCmd)
 }
@@ -40,6 +44,8 @@ func runCommand(cmd *cobra.Command, args []string) {
 	pemFile := viper.GetString("pem")
 	pemSecretArn := viper.GetString("pem-aws-secret")
 	githubEndpoint := viper.GetString("endpoint")
+	containerName := viper.GetString("container-name")
+	publicIP := viper.GetBool("publicIP")
 
 	privateKey, err := parsePrivateKey(pemFile, pemSecretArn)
 	if err != nil {
@@ -53,7 +59,8 @@ func runCommand(cmd *cobra.Command, args []string) {
 	config := &processor.RenovateTaskConfig{
 		TaskDefinition: task,
 		ClusterName:    clusterName,
-		AssignPublicIP: true,
+		ContainerName:  containerName,
+		AssignPublicIP: publicIP,
 	}
 
 	err = processor.RunRenovateTasks(appId, privateKey, githubEndpoint, config)

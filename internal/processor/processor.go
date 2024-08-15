@@ -43,6 +43,7 @@ func RunRenovateTasks(applicationID string, privateKey []byte, endpoint string, 
 type RenovateTaskConfig struct {
 	TaskDefinition string
 	ClusterName    string
+	ContainerName  string
 	AssignPublicIP bool
 }
 
@@ -50,7 +51,15 @@ func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installat
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
 
 	log.Printf("Creating renovate task for %s", repo)
-	_, err := aws_helper.RunTask(r.ClusterName, r.TaskDefinition, installationToken, repo, r.AssignPublicIP)
+
+	config := aws_helper.RunTaskConfig{
+		Cluster:   r.ClusterName,
+		Task:      r.TaskDefinition,
+		Container: r.ContainerName,
+		PublicIP:  r.AssignPublicIP,
+	}
+
+	_, err := aws_helper.RunTask(config, installationToken, repo)
 	if err != nil {
 		log.Printf("error running task: %v", err)
 		return
