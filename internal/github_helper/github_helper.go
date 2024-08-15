@@ -53,52 +53,7 @@ func GenerateJWT(applicationID string, privateKey *rsa.PrivateKey) (string, erro
 	return tokenString, nil
 }
 
-func FilterInstallation(client *github.Client, targetRepo string) (*github.Installation, error) {
-	opts := &github.ListOptions{PerPage: 10}
-	for {
-		installations, resp, err := client.Apps.ListInstallations(context.Background(), opts)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, installation := range installations {
-			token, _, err := client.Apps.CreateInstallationToken(context.Background(), installation.GetID(), nil)
-			if err != nil {
-				return nil, err
-			}
-
-			installationClient, _ := CreateClient(token.GetToken(), client.BaseURL.Host)
-
-			repoOpts := &github.ListOptions{PerPage: 10}
-			for {
-				repos, repoResp, err := installationClient.Apps.ListRepos(context.Background(), repoOpts)
-				if err != nil {
-					return nil, err
-				}
-
-				for _, repo := range repos.Repositories {
-					if fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName()) == targetRepo {
-						return installation, nil
-					}
-				}
-
-				if repoResp.NextPage == 0 {
-					break
-				}
-				repoOpts.Page = repoResp.NextPage
-			}
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
-	}
-
-	return nil, nil
-}
-
-type processFunc func(*github.Client, *github.Installation, *github.Repository)
+type processFunc func(*github.Repository, string)
 
 func ProcessAllInstallationRepositories(client *github.Client, processor processFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
@@ -114,7 +69,8 @@ func ProcessAllInstallationRepositories(client *github.Client, processor process
 				return err
 			}
 
-			installationClient, _ := CreateClient(token.GetToken(), client.BaseURL.Host)
+			installationToken := token.GetToken()
+			installationClient, _ := CreateClient(installationToken, client.BaseURL.Host)
 
 			repoOpts := &github.ListOptions{PerPage: 10}
 			for {
@@ -124,7 +80,7 @@ func ProcessAllInstallationRepositories(client *github.Client, processor process
 				}
 
 				for _, repo := range repos.Repositories {
-					processor(client, installation, repo)
+					processor(repo, installationToken)
 				}
 
 				if repoResp.NextPage == 0 {
