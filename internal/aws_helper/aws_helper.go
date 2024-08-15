@@ -39,7 +39,7 @@ type RunTaskConfig struct {
 	PublicIP  bool
 }
 
-func RunTask(taskConfig RunTaskConfig, installationToken string, repository string) (*ecs.RunTaskOutput, error) {
+func RunTask(taskConfig RunTaskConfig, installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -81,6 +81,10 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 				{
 					Name: aws.String(taskConfig.Container),
 					Environment: []types.KeyValuePair{
+						{
+							Name:  aws.String("RENOVATE_ENDPOINT"),
+							Value: aws.String(endpoint),
+						},
 						{
 							Name:  aws.String("RENOVATE_TOKEN"),
 							Value: aws.String(installationToken),

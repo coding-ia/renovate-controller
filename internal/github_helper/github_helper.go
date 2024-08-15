@@ -21,7 +21,6 @@ func CreateClient(token string, endpoint string) (*github.Client, error) {
 	if endpoint == "" || endpoint == "api.github.com" {
 		client = github.NewClient(tc)
 	} else {
-
 		endpointUrl, err := url.Parse(fmt.Sprintf("https://%s/api/v3/", endpoint))
 		if err != nil {
 			return nil, err
@@ -53,7 +52,7 @@ func GenerateJWT(applicationID string, privateKey *rsa.PrivateKey) (string, erro
 	return tokenString, nil
 }
 
-type processFunc func(*github.Repository, string)
+type processFunc func(*github.Repository, string, string)
 
 func ProcessAllInstallationRepositories(client *github.Client, processor processFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
@@ -80,7 +79,8 @@ func ProcessAllInstallationRepositories(client *github.Client, processor process
 				}
 
 				for _, repo := range repos.Repositories {
-					processor(repo, installationToken)
+					endpoint := fmt.Sprintf("%s://%s%s", client.BaseURL.Scheme, client.BaseURL.Host, client.BaseURL.Path)
+					processor(repo, installationToken, endpoint)
 				}
 
 				if repoResp.NextPage == 0 {

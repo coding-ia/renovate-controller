@@ -10,7 +10,7 @@ import (
 )
 
 type RenovateTask interface {
-	CreateTask(repository *github.Repository, installationToken string)
+	CreateTask(repository *github.Repository, installationToken string, endpoint string)
 }
 
 func RunRenovateTasks(applicationID string, privateKey []byte, endpoint string, config *RenovateTaskConfig) error {
@@ -47,10 +47,11 @@ type RenovateTaskConfig struct {
 	AssignPublicIP bool
 }
 
-func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installationToken string) {
+func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installationToken string, endpoint string) {
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
 
 	log.Printf("Creating renovate task for %s", repo)
+	log.Printf("Using GitHub endpoint: %s", endpoint)
 
 	config := aws_helper.RunTaskConfig{
 		Cluster:   r.ClusterName,
@@ -59,7 +60,7 @@ func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installat
 		PublicIP:  r.AssignPublicIP,
 	}
 
-	_, err := aws_helper.RunTask(config, installationToken, repo)
+	_, err := aws_helper.RunTask(config, installationToken, repo, endpoint)
 	if err != nil {
 		log.Printf("error running task: %v", err)
 		return
