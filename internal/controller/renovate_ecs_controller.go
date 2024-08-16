@@ -1,4 +1,4 @@
-package aws_helper
+package renovate_ecs_controller
 
 import (
 	"context"
@@ -13,33 +13,24 @@ import (
 	"log"
 )
 
-func GetSecret(secretID string) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return "", err
-	}
-
-	svc := secretsmanager.NewFromConfig(cfg)
-
-	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(secretID),
-	})
-	if err != nil {
-		return "", err
-	}
-
-	secretString := aws.ToString(result.SecretString)
-	return secretString, nil
-}
-
-type RunTaskConfig struct {
+type ECSTaskConfig struct {
 	Cluster   string
 	Task      string
 	Container string
 	PublicIP  bool
 }
 
-func RunTask(taskConfig RunTaskConfig, installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
+type RenovateECSController interface {
+	RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error)
+}
+
+func NewRenovateECSController(config ECSTaskConfig) RenovateECSController {
+	var controller RenovateECSController
+	controller = config
+	return controller
+}
+
+func (ecsTaskConfig ECSTaskConfig) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -57,7 +48,7 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 
 	assignPublicIP := types.AssignPublicIpDisabled
 	securityGroups, err := filterSecurityGroups()
-	if taskConfig.PublicIP {
+	if ecsTaskConfig.PublicIP {
 		assignPublicIP = types.AssignPublicIpEnabled
 	} else {
 		if securityGroups == nil {
@@ -66,8 +57,8 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 	}
 
 	runTaskInput := &ecs.RunTaskInput{
-		Cluster:        aws.String(taskConfig.Cluster),
-		TaskDefinition: aws.String(taskConfig.Task),
+		Cluster:        aws.String(ecsTaskConfig.Cluster),
+		TaskDefinition: aws.String(ecsTaskConfig.Task),
 		LaunchType:     types.LaunchTypeFargate,
 		NetworkConfiguration: &types.NetworkConfiguration{
 			AwsvpcConfiguration: &types.AwsVpcConfiguration{
@@ -79,7 +70,7 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 		Overrides: &types.TaskOverride{
 			ContainerOverrides: []types.ContainerOverride{
 				{
-					Name: aws.String(taskConfig.Container),
+					Name: aws.String(ecsTaskConfig.Container),
 					Environment: []types.KeyValuePair{
 						{
 							Name:  aws.String("RENOVATE_ENDPOINT"),
@@ -105,6 +96,25 @@ func RunTask(taskConfig RunTaskConfig, installationToken string, repository stri
 	}
 
 	return runTaskOutput, nil
+}
+
+func GetSecret(secretID string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return "", err
+	}
+
+	svc := secretsmanager.NewFromConfig(cfg)
+
+	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretID),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	secretString := aws.ToString(result.SecretString)
+	return secretString, nil
 }
 
 func filterSubnets() ([]string, error) {

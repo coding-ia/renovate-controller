@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
-	"renovate-controller/internal/aws_helper"
+	renovate_ecs_controller "renovate-controller/internal/controller"
 	"renovate-controller/internal/processor"
 )
 
@@ -77,7 +77,7 @@ func runCommand(cmd *cobra.Command, args []string) {
 
 func parsePrivateKey(pemFile string, pemSecretArn string) ([]byte, error) {
 	if pemSecretArn != "" {
-		secret, err := aws_helper.GetSecret(pemSecretArn)
+		secret, err := renovate_ecs_controller.GetSecret(pemSecretArn)
 		if err != nil {
 			return nil, err
 		}
