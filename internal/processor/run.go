@@ -29,17 +29,17 @@ type GitHubConfig struct {
 	Endpoint      string
 }
 
-type RenovateRun struct {
+type RenovateCommand struct {
 	Config       *RunConfig
 	GitHubClient *github.Client
 }
 
-func (r RenovateRun) CreateRenovateTasks() error {
+func (r RenovateCommand) CreateRenovateTasks() error {
 	var renovateTask RenovateTaskFunc
 	renovateTask = r.Config
 
 	svc := service.NewRenovateGitHubApplicationService(r.GitHubClient)
-	err := svc.ProcessInstallationRepositories(renovateTask.CreateTask)
+	err := svc.EnumerateInstallationRepositories(renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -64,7 +64,7 @@ func Run(githubConfig *GitHubConfig, runConfig *RunConfig) error {
 	}
 
 	var renovateTask RenovateTask
-	renovateTask = &RenovateRun{
+	renovateTask = &RenovateCommand{
 		Config:       runConfig,
 		GitHubClient: client,
 	}
