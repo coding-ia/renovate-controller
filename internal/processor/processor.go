@@ -13,26 +13,33 @@ type RenovateTaskFunc interface {
 	CreateTask(repository *github.Repository, installationToken string, endpoint string)
 }
 
-func RunRenovateTasks(applicationID string, privateKey []byte, endpoint string, config *RenovateTaskConfig) error {
-	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
-	if err != nil {
-		return err
-	}
+type RenovateTask interface {
+	CreateRenovateTasks() error
+}
 
-	tokenString, err := github_helper.GenerateJWT(applicationID, parsedKey)
-	if err != nil {
-		return fmt.Errorf("error generating JWT: %v", err)
-	}
+type RunConfig struct {
+	TaskDefinition string
+	ClusterName    string
+	ContainerName  string
+	AssignPublicIP bool
+}
 
-	client, err := github_helper.CreateClient(tokenString, endpoint)
-	if err != nil {
-		return fmt.Errorf("error creating github client: %v", err)
-	}
+type GitHubConfig struct {
+	ApplicationID string
+	PrivateKey    []byte
+	Endpoint      string
+}
 
+type RenovateRun struct {
+	Config       *RunConfig
+	GitHubClient *github.Client
+}
+
+func (r RenovateRun) CreateRenovateTasks() error {
 	var renovateTask RenovateTaskFunc
-	renovateTask = config
+	renovateTask = r.Config
 
-	err = github_helper.ProcessAllInstallationRepositories(client, renovateTask.CreateTask)
+	err := github_helper.ProcessInstallationRepositories(r.GitHubClient, renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -40,14 +47,37 @@ func RunRenovateTasks(applicationID string, privateKey []byte, endpoint string, 
 	return nil
 }
 
-type RenovateTaskConfig struct {
-	TaskDefinition string
-	ClusterName    string
-	ContainerName  string
-	AssignPublicIP bool
+func Run(githubConfig *GitHubConfig, runConfig *RunConfig) error {
+	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(githubConfig.PrivateKey)
+	if err != nil {
+		return err
+	}
+
+	tokenString, err := github_helper.GenerateJWT(githubConfig.ApplicationID, parsedKey)
+	if err != nil {
+		return fmt.Errorf("error generating JWT: %v", err)
+	}
+
+	client, err := github_helper.CreateClient(tokenString, githubConfig.Endpoint)
+	if err != nil {
+		return fmt.Errorf("error creating github client: %v", err)
+	}
+
+	var renovateTask RenovateTask
+	renovateTask = &RenovateRun{
+		Config:       runConfig,
+		GitHubClient: client,
+	}
+
+	err = renovateTask.CreateRenovateTasks()
+	if err != nil {
+		return fmt.Errorf("error creating renovate tasks: %v", err)
+	}
+
+	return nil
 }
 
-func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installationToken string, endpoint string) {
+func (r RunConfig) CreateTask(repository *github.Repository, installationToken string, endpoint string) {
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
 
 	log.Printf("Creating renovate task for %s", repo)

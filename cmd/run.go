@@ -56,14 +56,20 @@ func runCommand(cmd *cobra.Command, args []string) {
 	task := viper.GetString("task")
 	clusterName := viper.GetString("cluster")
 
-	config := &processor.RenovateTaskConfig{
+	runConfig := &processor.RunConfig{
 		TaskDefinition: task,
 		ClusterName:    clusterName,
 		ContainerName:  containerName,
 		AssignPublicIP: publicIP,
 	}
 
-	err = processor.RunRenovateTasks(appId, privateKey, githubEndpoint, config)
+	githubConfig := &processor.GitHubConfig{
+		ApplicationID: appId,
+		PrivateKey:    privateKey,
+		Endpoint:      githubEndpoint,
+	}
+
+	err = processor.Run(githubConfig, runConfig)
 	if err != nil {
 		log.Fatal(err)
 	}

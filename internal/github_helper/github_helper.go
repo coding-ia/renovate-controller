@@ -54,7 +54,7 @@ func GenerateJWT(applicationID string, privateKey *rsa.PrivateKey) (string, erro
 
 type processFunc func(*github.Repository, string, string)
 
-func ProcessAllInstallationRepositories(client *github.Client, processor processFunc) error {
+func ProcessInstallationRepositories(client *github.Client, processor processFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
 	for {
 		installations, resp, err := client.Apps.ListInstallations(context.Background(), opts)
