@@ -1,0 +1,28 @@
+services:
+  init-container:
+    image: renovate-controller:latest
+    container_name: renovate-controller-init
+    volumes:
+      - shared-data:/data:rw
+    environment:
+      - GITHUB_APPLICATION_ID=
+      - GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET=
+      - GITHUB_INSTALLATION_ID=
+      - GITHUB_TARGET_REPOSITORY=
+      - CONFIG_TEMPLATE_BUCKET=
+      - CONFIG_TEMPLATE_KEY=config.js
+      - GENERATE_CONFIG_OUTPUT=/data/config.js
+      - AWS_DEFAULT_REGION=us-east-2
+    command: task generate-config
+  renovate-container:
+    image: renovate/renovate:latest
+    container_name: renovate
+    volumes:
+      - shared-data:/data:ro
+    depends_on:
+      - init-container
+    environment:
+      - RENOVATE_CONFIG_FILE=/data/config.js
+
+volumes:
+  shared-data:

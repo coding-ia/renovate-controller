@@ -25,6 +25,9 @@ COPY --from=builder /bin/renovate-controller /usr/local/renovate-controller
 
 RUN addgroup -S gouser && adduser -S -G gouser -s /sbin/nologin gouser
 
+RUN mkdir /data && chown gouser:gouser /data
+VOLUME /data
+
 USER gouser
 
 ENTRYPOINT ["/usr/local/renovate-controller"]
