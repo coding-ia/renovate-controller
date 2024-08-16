@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
-	"os"
 	"renovate-controller/internal/processor"
 	"renovate-controller/internal/secrets"
 )
@@ -19,13 +18,12 @@ var runCmd = &cobra.Command{
 
 func runCommand(cmd *cobra.Command, args []string) {
 	appId := viper.GetString("appId")
-	pemFile := viper.GetString("pem")
 	pemSecretArn := viper.GetString("pem-aws-secret")
 	githubEndpoint := viper.GetString("endpoint")
 	containerName := viper.GetString("container-name")
 	publicIP := viper.GetBool("publicIP")
 
-	privateKey, err := parsePrivateKey(pemFile, pemSecretArn)
+	privateKey, err := parsePrivateKey(pemSecretArn)
 	if err != nil {
 		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
@@ -34,11 +32,17 @@ func runCommand(cmd *cobra.Command, args []string) {
 	task := viper.GetString("task")
 	clusterName := viper.GetString("cluster")
 
-	runConfig := &processor.RunConfig{
+	runConfig := &processor.RunCommandOptions{
 		TaskDefinition: task,
 		ClusterName:    clusterName,
 		ContainerName:  containerName,
 		AssignPublicIP: publicIP,
+
+		TaskOptions: processor.TaskCommandOptions{
+			ApplicationID: appId,
+			PEMAWSSecret:  pemSecretArn,
+			Endpoint:      githubEndpoint,
+		},
 	}
 
 	githubConfig := &processor.GitHubConfig{
@@ -53,18 +57,10 @@ func runCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
-func parsePrivateKey(pemFile string, pemSecretArn string) ([]byte, error) {
-	if pemSecretArn != "" {
-		secret, err := secrets.GetSecret(pemSecretArn)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(secret), nil
-	}
-
-	privateKey, err := os.ReadFile(pemFile)
+func parsePrivateKey(pemSecretArn string) ([]byte, error) {
+	secret, err := secrets.GetSecret(pemSecretArn)
 	if err != nil {
 		return nil, err
 	}
-	return privateKey, nil
+	return []byte(secret), nil
 }

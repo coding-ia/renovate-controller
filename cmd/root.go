@@ -21,12 +21,10 @@ to quickly create a Cobra application.`,
 
 func Execute() {
 	taskCmd.PersistentFlags().StringP("appId", "a", "", "GitHub Installation Application ID")
-	taskCmd.PersistentFlags().StringP("pem", "p", "", "GitHub Application Private Key File")
 	taskCmd.PersistentFlags().StringP("pem-aws-secret", "s", "", "GitHub Application Private Key (Secrets Manager)")
 	taskCmd.PersistentFlags().StringP("endpoint", "e", "", "GitHub Endpoint")
 
 	mapEnvToPFlag(taskCmd, "appId", "GITHUB_APPLICATION_ID")
-	mapEnvToPFlag(taskCmd, "pem", "GITHUB_APPLICATION_PRIVATE_PEM_FILE")
 	mapEnvToPFlag(taskCmd, "pem-aws-secret", "GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET")
 	mapEnvToPFlag(taskCmd, "endpoint", "GITHUB_APPLICATION_ENDPOINT")
 

@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type enumerateFunc func(*github.Repository, string, string)
+type enumerateFunc func(*github.Installation, *github.Repository)
 type processFunc func([]string, string, string)
 
 type RenovateGitHubApplicationService interface {
@@ -21,7 +21,8 @@ type RenovateGitHubApplicationService interface {
 }
 
 type ApplicationService struct {
-	Client *github.Client
+	ApplicationID string
+	Client        *github.Client
 }
 
 func NewRenovateGitHubApplicationService(client *github.Client) *ApplicationService {
@@ -58,8 +59,8 @@ func (a *ApplicationService) EnumerateInstallationRepositories(processor enumera
 				}
 
 				for _, repo := range repos.Repositories {
-					endpoint := fmt.Sprintf("%s://%s%s", a.Client.BaseURL.Scheme, a.Client.BaseURL.Host, a.Client.BaseURL.Path)
-					processor(repo, installationToken, endpoint)
+					//TODO:Fix
+					processor(installation, repo)
 				}
 
 				if repoResp.NextPage == 0 {

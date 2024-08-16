@@ -17,7 +17,6 @@ var generateConfigCmd = &cobra.Command{
 
 func generateConfigCommand(cmd *cobra.Command, args []string) {
 	appId := viper.GetString("appId")
-	pemFile := viper.GetString("pem")
 	pemSecretArn := viper.GetString("pem-aws-secret")
 	githubEndpoint := viper.GetString("endpoint")
 	installationId := viper.GetInt64("installationId")
@@ -26,7 +25,7 @@ func generateConfigCommand(cmd *cobra.Command, args []string) {
 	s3ConfigKey := viper.GetString("s3-config-key")
 	output := viper.GetString("output")
 
-	privateKey, err := parsePrivateKey(pemFile, pemSecretArn)
+	privateKey, err := parsePrivateKey(pemSecretArn)
 	if err != nil {
 		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
