@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
-	"os"
 	"renovate-controller/internal/processor"
 	"renovate-controller/internal/secrets"
 )
@@ -17,37 +16,14 @@ var runCmd = &cobra.Command{
 	Run:   runCommand,
 }
 
-func init() {
-	runCmd.Flags().StringP("appId", "a", "", "GitHub Application ID")
-	runCmd.Flags().StringP("pem", "p", "", "GitHub Application Private Key File")
-	runCmd.Flags().StringP("pem-aws-secret", "s", "", "GitHub Application Private Key (Secrets Manager)")
-	runCmd.Flags().StringP("endpoint", "e", "", "GitHub Endpoint")
-	runCmd.Flags().StringP("cluster", "c", "", "ECS Cluster Name")
-	runCmd.Flags().StringP("task", "t", "", "Task Definition Name")
-	runCmd.Flags().String("container-name", "renovate", "Task Container Name")
-	runCmd.Flags().Bool("publicIP", false, "Assign Public IP to Task")
-
-	mapEnvToFlag(runCmd, "appId", "GITHUB_APP_ID")
-	mapEnvToFlag(runCmd, "pem", "GITHUB_APP_PRIVATE_KEY_FILE")
-	mapEnvToFlag(runCmd, "pem-aws-secret", "GITHUB_APP_PRIVATE_KEY_AWS_SECRET")
-	mapEnvToFlag(runCmd, "endpoint", "GITHUB_ENDPOINT")
-	mapEnvToFlag(runCmd, "cluster", "AWS_ECS_CLUSTER_NAME")
-	mapEnvToFlag(runCmd, "task", "AWS_ECS_CLUSTER_TASK")
-	mapEnvToFlag(runCmd, "container-name", "AWS_ECS_CLUSTER_TASK_CONTAINER_NAME")
-	mapEnvToFlag(runCmd, "publicIP", "AWS_ECS_TASK_PUBLIC_IP")
-
-	rootCmd.AddCommand(runCmd)
-}
-
 func runCommand(cmd *cobra.Command, args []string) {
 	appId := viper.GetString("appId")
-	pemFile := viper.GetString("pem")
 	pemSecretArn := viper.GetString("pem-aws-secret")
 	githubEndpoint := viper.GetString("endpoint")
 	containerName := viper.GetString("container-name")
 	publicIP := viper.GetBool("publicIP")
 
-	privateKey, err := parsePrivateKey(pemFile, pemSecretArn)
+	privateKey, err := parsePrivateKey(pemSecretArn)
 	if err != nil {
 		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
@@ -56,11 +32,17 @@ func runCommand(cmd *cobra.Command, args []string) {
 	task := viper.GetString("task")
 	clusterName := viper.GetString("cluster")
 
-	runConfig := &processor.RunConfig{
+	runConfig := &processor.RunCommandOptions{
 		TaskDefinition: task,
 		ClusterName:    clusterName,
 		ContainerName:  containerName,
 		AssignPublicIP: publicIP,
+
+		TaskOptions: processor.TaskCommandOptions{
+			ApplicationID: appId,
+			PEMAWSSecret:  pemSecretArn,
+			Endpoint:      githubEndpoint,
+		},
 	}
 
 	githubConfig := &processor.GitHubConfig{
@@ -75,29 +57,10 @@ func runCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
-func parsePrivateKey(pemFile string, pemSecretArn string) ([]byte, error) {
-	if pemSecretArn != "" {
-		secret, err := secrets.GetSecret(pemSecretArn)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(secret), nil
-	}
-
-	privateKey, err := os.ReadFile(pemFile)
+func parsePrivateKey(pemSecretArn string) ([]byte, error) {
+	secret, err := secrets.GetSecret(pemSecretArn)
 	if err != nil {
 		return nil, err
 	}
-	return privateKey, nil
-}
-
-func mapEnvToFlag(command *cobra.Command, flag string, env string) {
-	err := viper.BindPFlag(flag, command.Flags().Lookup(flag))
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = viper.BindEnv(flag, env)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	return []byte(secret), nil
 }

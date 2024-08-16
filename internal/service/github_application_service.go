@@ -7,18 +7,22 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v55/github"
 	"golang.org/x/oauth2"
+	"log"
 	"net/url"
 	"time"
 )
 
-type processFunc func(*github.Repository, string, string)
+type enumerateFunc func(*github.Installation, *github.Repository)
+type processFunc func([]string, string, string)
 
 type RenovateGitHubApplicationService interface {
-	ProcessInstallationRepositories(processor processFunc) error
+	EnumerateInstallationRepositories(processor enumerateFunc)
+	ProcessInstallationRepository(installationId int64, processor processFunc) error
 }
 
 type ApplicationService struct {
-	Client *github.Client
+	ApplicationID string
+	Client        *github.Client
 }
 
 func NewRenovateGitHubApplicationService(client *github.Client) *ApplicationService {
@@ -27,10 +31,11 @@ func NewRenovateGitHubApplicationService(client *github.Client) *ApplicationServ
 	}
 }
 
-func (a *ApplicationService) ProcessInstallationRepositories(processor processFunc) error {
+func (a *ApplicationService) EnumerateInstallationRepositories(processor enumerateFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
 	for {
 		installations, resp, err := a.Client.Apps.ListInstallations(context.Background(), opts)
+
 		if err != nil {
 			return err
 		}
@@ -40,6 +45,8 @@ func (a *ApplicationService) ProcessInstallationRepositories(processor processFu
 			if err != nil {
 				return err
 			}
+
+			log.Printf("Processing repositories for installation %d", installation.GetID())
 
 			installationToken := token.GetToken()
 			installationClient, _ := CreateClient(installationToken, a.Client.BaseURL.Host)
@@ -52,8 +59,8 @@ func (a *ApplicationService) ProcessInstallationRepositories(processor processFu
 				}
 
 				for _, repo := range repos.Repositories {
-					endpoint := fmt.Sprintf("%s://%s%s", a.Client.BaseURL.Scheme, a.Client.BaseURL.Host, a.Client.BaseURL.Path)
-					processor(repo, installationToken, endpoint)
+					//TODO:Fix
+					processor(installation, repo)
 				}
 
 				if repoResp.NextPage == 0 {
@@ -68,6 +75,45 @@ func (a *ApplicationService) ProcessInstallationRepositories(processor processFu
 		}
 		opts.Page = resp.NextPage
 	}
+
+	return nil
+}
+
+func (a ApplicationService) ProcessInstallationRepository(installationId int64, processor processFunc) error {
+	installation, _, err := a.Client.Apps.GetInstallation(context.Background(), installationId)
+
+	if err != nil {
+		return err
+	}
+
+	token, _, err := a.Client.Apps.CreateInstallationToken(context.Background(), installation.GetID(), nil)
+	if err != nil {
+		return err
+	}
+
+	installationToken := token.GetToken()
+	installationClient, _ := CreateClient(installationToken, a.Client.BaseURL.Host)
+
+	var repoList []string
+	repoOpts := &github.ListOptions{PerPage: 10}
+	for {
+		repos, repoResp, err := installationClient.Apps.ListRepos(context.Background(), repoOpts)
+		if err != nil {
+			return err
+		}
+
+		for _, repo := range repos.Repositories {
+			repoList = append(repoList, repo.GetFullName())
+		}
+
+		if repoResp.NextPage == 0 {
+			break
+		}
+		repoOpts.Page = repoResp.NextPage
+	}
+
+	endpoint := fmt.Sprintf("%s://%s%s", a.Client.BaseURL.Scheme, a.Client.BaseURL.Host, a.Client.BaseURL.Path)
+	processor(repoList, installationToken, endpoint)
 
 	return nil
 }

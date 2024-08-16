@@ -6,21 +6,29 @@ import (
 	"github.com/google/go-github/v55/github"
 	"log"
 	"renovate-controller/internal/service"
+	"strconv"
 )
 
 type RenovateTaskFunc interface {
-	CreateTask(repository *github.Repository, installationToken string, endpoint string)
+	CreateTask(installation *github.Installation, repository *github.Repository)
 }
 
 type RenovateTask interface {
 	CreateRenovateTasks() error
 }
 
-type RunConfig struct {
+type TaskCommandOptions struct {
+	ApplicationID string
+	PEMAWSSecret  string
+	Endpoint      string
+}
+
+type RunCommandOptions struct {
 	TaskDefinition string
 	ClusterName    string
 	ContainerName  string
 	AssignPublicIP bool
+	TaskOptions    TaskCommandOptions
 }
 
 type GitHubConfig struct {
@@ -29,17 +37,17 @@ type GitHubConfig struct {
 	Endpoint      string
 }
 
-type RenovateRun struct {
-	Config       *RunConfig
+type RenovateCommand struct {
+	RunOptions   *RunCommandOptions
 	GitHubClient *github.Client
 }
 
-func (r RenovateRun) CreateRenovateTasks() error {
+func (r RenovateCommand) CreateRenovateTasks() error {
 	var renovateTask RenovateTaskFunc
-	renovateTask = r.Config
+	renovateTask = r.RunOptions
 
 	svc := service.NewRenovateGitHubApplicationService(r.GitHubClient)
-	err := svc.ProcessInstallationRepositories(renovateTask.CreateTask)
+	err := svc.EnumerateInstallationRepositories(renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -47,7 +55,7 @@ func (r RenovateRun) CreateRenovateTasks() error {
 	return nil
 }
 
-func Run(githubConfig *GitHubConfig, runConfig *RunConfig) error {
+func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(githubConfig.PrivateKey)
 	if err != nil {
 		return err
@@ -64,8 +72,8 @@ func Run(githubConfig *GitHubConfig, runConfig *RunConfig) error {
 	}
 
 	var renovateTask RenovateTask
-	renovateTask = &RenovateRun{
-		Config:       runConfig,
+	renovateTask = &RenovateCommand{
+		RunOptions:   runConfig,
 		GitHubClient: client,
 	}
 
@@ -77,8 +85,9 @@ func Run(githubConfig *GitHubConfig, runConfig *RunConfig) error {
 	return nil
 }
 
-func (r RunConfig) CreateTask(repository *github.Repository, installationToken string, endpoint string) {
+func (r RunCommandOptions) CreateTask(installation *github.Installation, repository *github.Repository) {
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
+	installationID := strconv.FormatInt(installation.GetID(), 10)
 
 	log.Printf("Creating renovate task for %s", repo)
 
@@ -90,7 +99,14 @@ func (r RunConfig) CreateTask(repository *github.Repository, installationToken s
 	}
 
 	svc := service.NewRenovateTaskService(config)
-	_, err := svc.RunTask(installationToken, repo, endpoint)
+
+	taskConfig := service.RunTaskConfig{
+		ApplicationID:  r.TaskOptions.ApplicationID,
+		Repository:     repo,
+		InstallationID: installationID,
+		PEMAWSSecret:   r.TaskOptions.PEMAWSSecret,
+	}
+	_, err := svc.RunTask(taskConfig)
 	if err != nil {
 		log.Printf("error running task: %v", err)
 		return

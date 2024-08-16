@@ -33,7 +33,14 @@ func NewRenovateTaskService(config ECSConfig) *TaskService {
 	}
 }
 
-func (t *TaskService) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
+type RunTaskConfig struct {
+	ApplicationID  string
+	InstallationID string
+	Repository     string
+	PEMAWSSecret   string
+}
+
+func (t *TaskService) RunTask(runConfig RunTaskConfig) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -73,19 +80,23 @@ func (t *TaskService) RunTask(installationToken string, repository string, endpo
 		Overrides: &types.TaskOverride{
 			ContainerOverrides: []types.ContainerOverride{
 				{
-					Name: aws.String(t.Config.Container),
+					Name: aws.String("init"),
 					Environment: []types.KeyValuePair{
 						{
-							Name:  aws.String("RENOVATE_ENDPOINT"),
-							Value: aws.String(endpoint),
+							Name:  aws.String("GITHUB_APPLICATION_ID"),
+							Value: aws.String(runConfig.ApplicationID),
 						},
 						{
-							Name:  aws.String("RENOVATE_TOKEN"),
-							Value: aws.String(installationToken),
+							Name:  aws.String("GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET"),
+							Value: aws.String(runConfig.PEMAWSSecret),
 						},
 						{
-							Name:  aws.String("RENOVATE_REPOSITORIES"),
-							Value: aws.String(repository),
+							Name:  aws.String("GITHUB_INSTALLATION_ID"),
+							Value: aws.String(runConfig.InstallationID),
+						},
+						{
+							Name:  aws.String("GITHUB_TARGET_REPOSITORY"),
+							Value: aws.String(runConfig.Repository),
 						},
 					},
 				},
