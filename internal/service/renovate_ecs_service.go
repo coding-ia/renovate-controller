@@ -1,4 +1,4 @@
-package renovate_ecs_controller
+package service
 
 import (
 	"context"
@@ -9,28 +9,27 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
-	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"log"
 )
 
-type ECSTaskConfig struct {
+type ECSServiceConfig struct {
 	Cluster   string
 	Task      string
 	Container string
 	PublicIP  bool
 }
 
-type RenovateECSController interface {
+type RenovateECSService interface {
 	RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error)
 }
 
-func NewRenovateECSController(config ECSTaskConfig) RenovateECSController {
-	var controller RenovateECSController
+func NewRenovateECSService(config ECSServiceConfig) RenovateECSService {
+	var controller RenovateECSService
 	controller = config
 	return controller
 }
 
-func (ecsTaskConfig ECSTaskConfig) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
+func (ecsTaskConfig ECSServiceConfig) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -96,25 +95,6 @@ func (ecsTaskConfig ECSTaskConfig) RunTask(installationToken string, repository 
 	}
 
 	return runTaskOutput, nil
-}
-
-func GetSecret(secretID string) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return "", err
-	}
-
-	svc := secretsmanager.NewFromConfig(cfg)
-
-	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(secretID),
-	})
-	if err != nil {
-		return "", err
-	}
-
-	secretString := aws.ToString(result.SecretString)
-	return secretString, nil
 }
 
 func filterSubnets() ([]string, error) {

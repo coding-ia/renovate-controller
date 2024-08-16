@@ -5,8 +5,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v55/github"
 	"log"
-	"renovate-controller/internal/controller"
 	"renovate-controller/internal/github_helper"
+	"renovate-controller/internal/service"
 )
 
 type RenovateTaskFunc interface {
@@ -82,14 +82,14 @@ func (r RunConfig) CreateTask(repository *github.Repository, installationToken s
 
 	log.Printf("Creating renovate task for %s", repo)
 
-	config := renovate_ecs_controller.ECSTaskConfig{
+	config := service.ECSServiceConfig{
 		Cluster:   r.ClusterName,
 		Task:      r.TaskDefinition,
 		Container: r.ContainerName,
 		PublicIP:  r.AssignPublicIP,
 	}
 
-	svc := renovate_ecs_controller.NewRenovateECSController(config)
+	svc := service.NewRenovateECSService(config)
 	_, err := svc.RunTask(installationToken, repo, endpoint)
 	if err != nil {
 		log.Printf("error running task: %v", err)
