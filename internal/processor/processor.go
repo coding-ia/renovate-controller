@@ -38,10 +38,7 @@ func (r RenovateRun) CreateRenovateTasks() error {
 	var renovateTask RenovateTaskFunc
 	renovateTask = r.Config
 
-	applicationService := service.ApplicationService{
-		Client: r.GitHubClient,
-	}
-	svc := service.NewRenovateGitHubApplicationService(applicationService)
+	svc := service.NewRenovateGitHubApplicationService(r.GitHubClient)
 	err := svc.ProcessInstallationRepositories(renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)

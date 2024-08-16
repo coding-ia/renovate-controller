@@ -21,13 +21,13 @@ type ApplicationService struct {
 	Client *github.Client
 }
 
-func NewRenovateGitHubApplicationService(applicationService ApplicationService) RenovateGitHubApplicationService {
-	var service RenovateGitHubApplicationService
-	service = applicationService
-	return service
+func NewRenovateGitHubApplicationService(client *github.Client) *ApplicationService {
+	return &ApplicationService{
+		Client: client,
+	}
 }
 
-func (a ApplicationService) ProcessInstallationRepositories(processor processFunc) error {
+func (a *ApplicationService) ProcessInstallationRepositories(processor processFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
 	for {
 		installations, resp, err := a.Client.Apps.ListInstallations(context.Background(), opts)

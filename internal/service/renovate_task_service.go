@@ -27,15 +27,13 @@ type RenovateTaskService interface {
 	RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error)
 }
 
-func NewRenovateTaskService(config ECSConfig) RenovateTaskService {
-	var service RenovateTaskService
-	service = TaskService{
+func NewRenovateTaskService(config ECSConfig) *TaskService {
+	return &TaskService{
 		Config: config,
 	}
-	return service
 }
 
-func (t TaskService) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
+func (t *TaskService) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
