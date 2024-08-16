@@ -85,14 +85,14 @@ func (r RunConfig) CreateTask(repository *github.Repository, installationToken s
 
 	log.Printf("Creating renovate task for %s", repo)
 
-	config := service.ECSServiceConfig{
+	config := service.ECSConfig{
 		Cluster:   r.ClusterName,
 		Task:      r.TaskDefinition,
 		Container: r.ContainerName,
 		PublicIP:  r.AssignPublicIP,
 	}
 
-	svc := service.NewRenovateECSService(config)
+	svc := service.NewRenovateTaskService(config)
 	_, err := svc.RunTask(installationToken, repo, endpoint)
 	if err != nil {
 		log.Printf("error running task: %v", err)

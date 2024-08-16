@@ -12,24 +12,30 @@ import (
 	"log"
 )
 
-type ECSServiceConfig struct {
+type ECSConfig struct {
 	Cluster   string
 	Task      string
 	Container string
 	PublicIP  bool
 }
 
-type RenovateECSService interface {
+type TaskService struct {
+	Config ECSConfig
+}
+
+type RenovateTaskService interface {
 	RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error)
 }
 
-func NewRenovateECSService(config ECSServiceConfig) RenovateECSService {
-	var service RenovateECSService
-	service = config
+func NewRenovateTaskService(config ECSConfig) RenovateTaskService {
+	var service RenovateTaskService
+	service = TaskService{
+		Config: config,
+	}
 	return service
 }
 
-func (ecsTaskConfig ECSServiceConfig) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
+func (t TaskService) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -47,7 +53,7 @@ func (ecsTaskConfig ECSServiceConfig) RunTask(installationToken string, reposito
 
 	assignPublicIP := types.AssignPublicIpDisabled
 	securityGroups, err := filterSecurityGroups()
-	if ecsTaskConfig.PublicIP {
+	if t.Config.PublicIP {
 		assignPublicIP = types.AssignPublicIpEnabled
 	} else {
 		if securityGroups == nil {
@@ -56,8 +62,8 @@ func (ecsTaskConfig ECSServiceConfig) RunTask(installationToken string, reposito
 	}
 
 	runTaskInput := &ecs.RunTaskInput{
-		Cluster:        aws.String(ecsTaskConfig.Cluster),
-		TaskDefinition: aws.String(ecsTaskConfig.Task),
+		Cluster:        aws.String(t.Config.Cluster),
+		TaskDefinition: aws.String(t.Config.Task),
 		LaunchType:     types.LaunchTypeFargate,
 		NetworkConfiguration: &types.NetworkConfiguration{
 			AwsvpcConfiguration: &types.AwsVpcConfiguration{
@@ -69,7 +75,7 @@ func (ecsTaskConfig ECSServiceConfig) RunTask(installationToken string, reposito
 		Overrides: &types.TaskOverride{
 			ContainerOverrides: []types.ContainerOverride{
 				{
-					Name: aws.String(ecsTaskConfig.Container),
+					Name: aws.String(t.Config.Container),
 					Environment: []types.KeyValuePair{
 						{
 							Name:  aws.String("RENOVATE_ENDPOINT"),
