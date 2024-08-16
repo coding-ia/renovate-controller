@@ -51,7 +51,6 @@ func (r *RenovateTaskConfig) CreateTask(repository *github.Repository, installat
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
 
 	log.Printf("Creating renovate task for %s", repo)
-	log.Printf("Using GitHub endpoint: %s", endpoint)
 
 	config := aws_helper.RunTaskConfig{
 		Cluster:   r.ClusterName,
