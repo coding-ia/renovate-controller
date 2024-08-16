@@ -2,8 +2,8 @@ package processor
 
 import (
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/go-github/v55/github"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/go-github/v63/github"
 	"log"
 	"renovate-controller/internal/service"
 	"strconv"
