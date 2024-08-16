@@ -83,14 +83,6 @@ func (t *TaskService) RunTask(runConfig RunTaskConfig) (*ecs.RunTaskOutput, erro
 					Name: aws.String("init"),
 					Environment: []types.KeyValuePair{
 						{
-							Name:  aws.String("GITHUB_APPLICATION_ID"),
-							Value: aws.String(runConfig.ApplicationID),
-						},
-						{
-							Name:  aws.String("GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET"),
-							Value: aws.String(runConfig.PEMAWSSecret),
-						},
-						{
 							Name:  aws.String("GITHUB_INSTALLATION_ID"),
 							Value: aws.String(runConfig.InstallationID),
 						},
