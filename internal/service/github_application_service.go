@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/go-github/v55/github"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 	"log"
 	"net/url"
@@ -59,7 +59,6 @@ func (a *ApplicationService) EnumerateInstallationRepositories(processor enumera
 				}
 
 				for _, repo := range repos.Repositories {
-					//TODO:Fix
 					processor(installation, repo)
 				}
 
@@ -79,7 +78,7 @@ func (a *ApplicationService) EnumerateInstallationRepositories(processor enumera
 	return nil
 }
 
-func (a ApplicationService) ProcessInstallationRepository(installationId int64, processor processFunc) error {
+func (a *ApplicationService) ProcessInstallationRepository(installationId int64, processor processFunc) error {
 	installation, _, err := a.Client.Apps.GetInstallation(context.Background(), installationId)
 
 	if err != nil {
