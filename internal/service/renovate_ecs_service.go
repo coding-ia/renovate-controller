@@ -24,9 +24,9 @@ type RenovateECSService interface {
 }
 
 func NewRenovateECSService(config ECSServiceConfig) RenovateECSService {
-	var controller RenovateECSService
-	controller = config
-	return controller
+	var service RenovateECSService
+	service = config
+	return service
 }
 
 func (ecsTaskConfig ECSServiceConfig) RunTask(installationToken string, repository string, endpoint string) (*ecs.RunTaskOutput, error) {

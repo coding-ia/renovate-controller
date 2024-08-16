@@ -5,7 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v55/github"
 	"log"
-	"renovate-controller/internal/github_helper"
 	"renovate-controller/internal/service"
 )
 
@@ -39,7 +38,11 @@ func (r RenovateRun) CreateRenovateTasks() error {
 	var renovateTask RenovateTaskFunc
 	renovateTask = r.Config
 
-	err := github_helper.ProcessInstallationRepositories(r.GitHubClient, renovateTask.CreateTask)
+	applicationService := service.ApplicationService{
+		Client: r.GitHubClient,
+	}
+	svc := service.NewRenovateGitHubApplicationService(applicationService)
+	err := svc.ProcessInstallationRepositories(renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -53,12 +56,12 @@ func Run(githubConfig *GitHubConfig, runConfig *RunConfig) error {
 		return err
 	}
 
-	tokenString, err := github_helper.GenerateJWT(githubConfig.ApplicationID, parsedKey)
+	tokenString, err := service.GenerateJWT(githubConfig.ApplicationID, parsedKey)
 	if err != nil {
 		return fmt.Errorf("error generating JWT: %v", err)
 	}
 
-	client, err := github_helper.CreateClient(tokenString, githubConfig.Endpoint)
+	client, err := service.CreateClient(tokenString, githubConfig.Endpoint)
 	if err != nil {
 		return fmt.Errorf("error creating github client: %v", err)
 	}
