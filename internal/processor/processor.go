@@ -9,7 +9,7 @@ import (
 	"renovate-controller/internal/github_helper"
 )
 
-type RenovateTask interface {
+type RenovateTaskFunc interface {
 	CreateTask(repository *github.Repository, installationToken string, endpoint string)
 }
 
@@ -29,7 +29,7 @@ func RunRenovateTasks(applicationID string, privateKey []byte, endpoint string, 
 		return fmt.Errorf("error creating github client: %v", err)
 	}
 
-	var renovateTask RenovateTask
+	var renovateTask RenovateTaskFunc
 	renovateTask = config
 
 	err = github_helper.ProcessAllInstallationRepositories(client, renovateTask.CreateTask)
