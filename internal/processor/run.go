@@ -5,7 +5,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v63/github"
 	"log"
-	"renovate-controller/internal/service"
+	internalservice "renovate-controller/internal/service"
+	"renovate-controller/service"
 	"strconv"
 )
 
@@ -46,7 +47,7 @@ func (r RenovateCommand) CreateRenovateTasks() error {
 	var renovateTask RenovateTaskFunc
 	renovateTask = r.RunOptions
 
-	svc := service.NewRenovateGitHubApplicationService(r.GitHubClient)
+	svc := internalservice.NewRenovateGitHubApplicationService(r.GitHubClient)
 	err := svc.EnumerateInstallationRepositories(renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
@@ -61,12 +62,12 @@ func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 		return err
 	}
 
-	tokenString, err := service.GenerateJWT(githubConfig.ApplicationID, parsedKey)
+	tokenString, err := internalservice.GenerateJWT(githubConfig.ApplicationID, parsedKey)
 	if err != nil {
 		return fmt.Errorf("error generating JWT: %v", err)
 	}
 
-	client, err := service.CreateClient(tokenString, githubConfig.Endpoint)
+	client, err := internalservice.CreateClient(tokenString, githubConfig.Endpoint)
 	if err != nil {
 		return fmt.Errorf("error creating github client: %v", err)
 	}
@@ -104,7 +105,6 @@ func (r RunCommandOptions) CreateTask(installation *github.Installation, reposit
 		ApplicationID:  r.TaskOptions.ApplicationID,
 		Repository:     repo,
 		InstallationID: installationID,
-		PEMAWSSecret:   r.TaskOptions.PEMAWSSecret,
 	}
 	_, err := svc.RunTask(taskConfig)
 	if err != nil {
