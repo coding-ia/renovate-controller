@@ -2,11 +2,11 @@ package processor
 
 import (
 	"fmt"
+	internalservice "github.com/coding-ia/renovate-controller/internal/service"
+	"github.com/coding-ia/renovate-controller/service"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v63/github"
 	"log"
-	internalservice "renovate-controller/internal/service"
-	"renovate-controller/service"
 	"strconv"
 )
 

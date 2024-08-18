@@ -1,4 +1,4 @@
-module renovate-controller
+module github.com/coding-ia/renovate-controller
 
 go 1.22.1
 

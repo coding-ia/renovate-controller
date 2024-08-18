@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/coding-ia/renovate-controller/internal/processor"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
-	"renovate-controller/internal/processor"
 )
 
 var generateConfigCmd = &cobra.Command{
