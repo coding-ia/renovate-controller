@@ -1,6 +1,6 @@
 package main
 
-import "renovate-controller/cmd"
+import "github.com/coding-ia/renovate-controller/cmd"
 
 func main() {
 	cmd.Execute()

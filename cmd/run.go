@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/coding-ia/renovate-controller/internal/processor"
+	"github.com/coding-ia/renovate-controller/internal/secrets"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
-	"renovate-controller/internal/processor"
-	"renovate-controller/internal/secrets"
 )
 
 var runCmd = &cobra.Command{
