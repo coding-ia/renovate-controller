@@ -37,7 +37,6 @@ type RunTaskConfig struct {
 	ApplicationID  string
 	InstallationID string
 	Repository     string
-	PEMAWSSecret   string
 }
 
 func (t *TaskService) RunTask(runConfig RunTaskConfig) (*ecs.RunTaskOutput, error) {
