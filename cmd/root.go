@@ -31,12 +31,16 @@ func Execute() {
 	runCmd.Flags().StringP("cluster", "c", "", "ECS Cluster Name")
 	runCmd.Flags().StringP("task", "t", "", "Task Definition Name")
 	runCmd.Flags().String("container-name", "renovate", "Task Container Name")
-	runCmd.Flags().Bool("publicIP", false, "Assign Public IP to Task")
+	runCmd.Flags().StringSlice("subnet-ids", []string{}, "AWS VPC Subnet IDs")
+	runCmd.Flags().StringSlice("security-group-ids", []string{}, "AWS VPC SecurityGroup IDs")
+	runCmd.Flags().Bool("assign-public-ip", false, "Assign Public IP to Task")
 
 	mapEnvToFlag(runCmd, "cluster", "AWS_ECS_CLUSTER_NAME")
 	mapEnvToFlag(runCmd, "task", "AWS_ECS_CLUSTER_TASK")
 	mapEnvToFlag(runCmd, "container-name", "AWS_ECS_CLUSTER_TASK_CONTAINER_NAME")
-	mapEnvToFlag(runCmd, "publicIP", "AWS_ECS_TASK_PUBLIC_IP")
+	mapEnvToFlag(runCmd, "subnet-ids", "AWS_ECS_TASK_SUBNET_IDS")
+	mapEnvToFlag(runCmd, "security-group-ids", "AWS_ECS_TASK_SECURITY_GROUP_IDS")
+	mapEnvToFlag(runCmd, "assign-public-ip", "AWS_ECS_TASK_PUBLIC_IP")
 
 	generateConfigCmd.Flags().Int64P("installationId", "", 0, "GitHub Installation ID")
 	generateConfigCmd.Flags().StringP("target-repository", "", "", "GitHub target repository")

@@ -29,6 +29,8 @@ type RunCommandOptions struct {
 	ClusterName    string
 	ContainerName  string
 	AssignPublicIP bool
+	Subnets        []string
+	SecurityGroups []string
 	TaskOptions    TaskCommandOptions
 }
 
@@ -96,7 +98,11 @@ func (r RunCommandOptions) CreateTask(installation *github.Installation, reposit
 		Cluster:   r.ClusterName,
 		Task:      r.TaskDefinition,
 		Container: r.ContainerName,
-		PublicIP:  r.AssignPublicIP,
+		AWSVPCConfig: service.ECSVPCConfig{
+			Subnets:        r.Subnets,
+			SecurityGroups: r.SecurityGroups,
+			AssignPublicIP: r.AssignPublicIP,
+		},
 	}
 
 	svc := service.NewRenovateTaskService(config)

@@ -12,11 +12,17 @@ import (
 	"log"
 )
 
+type ECSVPCConfig struct {
+	Subnets        []string
+	AssignPublicIP bool
+	SecurityGroups []string
+}
+
 type ECSConfig struct {
-	Cluster   string
-	Task      string
-	Container string
-	PublicIP  bool
+	Cluster      string
+	Task         string
+	Container    string
+	AWSVPCConfig ECSVPCConfig
 }
 
 type TaskService struct {
@@ -47,20 +53,33 @@ func (t *TaskService) RunTask(runConfig RunTaskConfig) (*ecs.RunTaskOutput, erro
 
 	svc := ecs.NewFromConfig(cfg)
 
-	subnets, err := filterSubnets()
-	if err != nil {
-		return nil, err
+	var subnets []string
+	var securityGroups []string
+
+	if len(t.Config.AWSVPCConfig.Subnets) == 0 {
+		subnets, err = filterSubnets()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		subnets = t.Config.AWSVPCConfig.Subnets
 	}
-	if subnets == nil {
+
+	if len(subnets) == 0 {
 		return nil, fmt.Errorf("no subnets found")
 	}
 
+	if len(t.Config.AWSVPCConfig.SecurityGroups) == 0 {
+		securityGroups, err = filterSecurityGroups()
+	} else {
+		securityGroups = t.Config.AWSVPCConfig.SecurityGroups
+	}
+
 	assignPublicIP := types.AssignPublicIpDisabled
-	securityGroups, err := filterSecurityGroups()
-	if t.Config.PublicIP {
+	if t.Config.AWSVPCConfig.AssignPublicIP {
 		assignPublicIP = types.AssignPublicIpEnabled
 	} else {
-		if securityGroups == nil {
+		if len(securityGroups) == 0 {
 			log.Printf("No security groups found and public IP disabled.")
 		}
 	}
