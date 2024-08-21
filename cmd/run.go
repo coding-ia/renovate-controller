@@ -21,7 +21,9 @@ func runCommand(cmd *cobra.Command, args []string) {
 	pemSecretArn := viper.GetString("pem-aws-secret")
 	githubEndpoint := viper.GetString("endpoint")
 	containerName := viper.GetString("container-name")
-	publicIP := viper.GetBool("publicIP")
+	subnets := viper.GetStringSlice("subnet-ids")
+	securityGroups := viper.GetStringSlice("security-group-ids")
+	publicIP := viper.GetBool("assign-public-ip")
 
 	privateKey, err := parsePrivateKey(pemSecretArn)
 	if err != nil {
@@ -37,7 +39,8 @@ func runCommand(cmd *cobra.Command, args []string) {
 		ClusterName:    clusterName,
 		ContainerName:  containerName,
 		AssignPublicIP: publicIP,
-
+		Subnets:        subnets,
+		SecurityGroups: securityGroups,
 		TaskOptions: processor.TaskCommandOptions{
 			ApplicationID: appId,
 			PEMAWSSecret:  pemSecretArn,
