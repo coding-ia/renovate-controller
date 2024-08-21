@@ -2,6 +2,13 @@ module github.com/coding-ia/renovate-controller
 
 go 1.22.1
 
+retract (
+    v1.0.0
+    v1.0.1
+    v1.0.2
+    v1.0.3
+)
+
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.4
 	github.com/aws/aws-sdk-go-v2/config v1.27.28
