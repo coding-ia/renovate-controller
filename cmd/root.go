@@ -31,8 +31,8 @@ func Execute() {
 	runCmd.Flags().StringP("cluster", "c", "", "ECS Cluster Name")
 	runCmd.Flags().StringP("task", "t", "", "Task Definition Name")
 	runCmd.Flags().String("container-name", "renovate", "Task Container Name")
-	runCmd.Flags().StringSlice("subnet-ids", []string{}, "AWS VPC Subnet IDs")
-	runCmd.Flags().StringSlice("security-group-ids", []string{}, "AWS VPC SecurityGroup IDs")
+	runCmd.Flags().String("subnet-ids", "", "AWS VPC Subnet IDs")
+	runCmd.Flags().String("security-group-ids", "", "AWS VPC SecurityGroup IDs")
 	runCmd.Flags().Bool("assign-public-ip", false, "Assign Public IP to Task")
 
 	mapEnvToFlag(runCmd, "cluster", "AWS_ECS_CLUSTER_NAME")
