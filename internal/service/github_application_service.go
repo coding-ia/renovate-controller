@@ -59,7 +59,7 @@ func (a *ApplicationService) EnumerateInstallationRepositories(ctx context.Conte
 				}
 
 				for _, repo := range repos.Repositories {
-					processor(context.TODO(), installation, repo)
+					processor(ctx, installation, repo)
 				}
 
 				if repoResp.NextPage == 0 {
