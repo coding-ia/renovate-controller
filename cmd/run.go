@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/coding-ia/renovate-controller/internal/processor"
 	"github.com/coding-ia/renovate-controller/internal/secrets"
@@ -26,7 +27,8 @@ func runCommand(cmd *cobra.Command, args []string) {
 	securityGroups := viper.GetString("security-group-ids")
 	publicIP := viper.GetBool("assign-public-ip")
 
-	privateKey, err := parsePrivateKey(pemSecretArn)
+	ctx := cmd.Context()
+	privateKey, err := parsePrivateKey(ctx, pemSecretArn)
 	if err != nil {
 		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
@@ -71,8 +73,8 @@ func runCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
-func parsePrivateKey(pemSecretArn string) ([]byte, error) {
-	secret, err := secrets.GetSecret(pemSecretArn)
+func parsePrivateKey(ctx context.Context, pemSecretArn string) ([]byte, error) {
+	secret, err := secrets.GetSecret(ctx, pemSecretArn)
 	if err != nil {
 		return nil, err
 	}

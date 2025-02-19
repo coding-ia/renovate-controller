@@ -25,7 +25,8 @@ func generateConfigCommand(cmd *cobra.Command, args []string) {
 	s3ConfigKey := viper.GetString("s3-config-key")
 	output := viper.GetString("output")
 
-	privateKey, err := parsePrivateKey(pemSecretArn)
+	ctx := cmd.Context()
+	privateKey, err := parsePrivateKey(ctx, pemSecretArn)
 	if err != nil {
 		fmt.Printf("Error retrieving private key: %v\n", err)
 		return
