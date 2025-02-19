@@ -13,7 +13,7 @@ import (
 )
 
 type enumerateFunc func(context.Context, *github.Installation, *github.Repository)
-type processFunc func([]string, string, string)
+type processFunc func(context.Context, []string, string, string)
 
 type RenovateGitHubApplicationService interface {
 	EnumerateInstallationRepositories(processor enumerateFunc)
@@ -78,7 +78,7 @@ func (a *ApplicationService) EnumerateInstallationRepositories(ctx context.Conte
 	return nil
 }
 
-func (a *ApplicationService) ProcessInstallationRepository(installationId int64, processor processFunc) error {
+func (a *ApplicationService) ProcessInstallationRepository(ctx context.Context, installationId int64, processor processFunc) error {
 	installation, _, err := a.Client.Apps.GetInstallation(context.Background(), installationId)
 
 	if err != nil {
@@ -112,7 +112,7 @@ func (a *ApplicationService) ProcessInstallationRepository(installationId int64,
 	}
 
 	endpoint := fmt.Sprintf("%s://%s%s", a.Client.BaseURL.Scheme, a.Client.BaseURL.Host, a.Client.BaseURL.Path)
-	processor(repoList, installationToken, endpoint)
+	processor(ctx, repoList, installationToken, endpoint)
 
 	return nil
 }

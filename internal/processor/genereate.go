@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"context"
 	"fmt"
 	"github.com/coding-ia/renovate-controller/internal/service"
 	"github.com/coding-ia/renovate-controller/internal/store"
@@ -12,11 +13,11 @@ import (
 )
 
 type GenerateTaskFunc interface {
-	GenerateConfig(repos []string, installationToken string, endpoint string)
+	GenerateConfig(ctx context.Context, repos []string, installationToken string, endpoint string)
 }
 
 type GenerateTask interface {
-	GenerateConfig() error
+	GenerateConfig(ctx context.Context) error
 }
 
 type GenerateCommand struct {
@@ -36,14 +37,14 @@ type GenerateFuncCallback struct {
 	Command GenerateCommand
 }
 
-func (g GenerateCommand) GenerateConfig() error {
+func (g GenerateCommand) GenerateConfig(ctx context.Context) error {
 	var generateTask GenerateTaskFunc
 	generateTask = &GenerateFuncCallback{
 		Command: g,
 	}
 
 	svc := service.NewRenovateGitHubApplicationService(g.GitHubClient)
-	err := svc.ProcessInstallationRepository(g.CommandOptions.InstallationID, generateTask.GenerateConfig)
+	err := svc.ProcessInstallationRepository(ctx, g.CommandOptions.InstallationID, generateTask.GenerateConfig)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -51,7 +52,7 @@ func (g GenerateCommand) GenerateConfig() error {
 	return nil
 }
 
-func Generate(githubConfig *GitHubConfig, options GenerateCommandOptions) error {
+func Generate(ctx context.Context, githubConfig *GitHubConfig, options GenerateCommandOptions) error {
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(githubConfig.PrivateKey)
 	if err != nil {
 		return err
@@ -73,7 +74,7 @@ func Generate(githubConfig *GitHubConfig, options GenerateCommandOptions) error 
 		GitHubClient:   client,
 	}
 
-	err = renovateTask.GenerateConfig()
+	err = renovateTask.GenerateConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating renovate tasks: %v", err)
 	}
@@ -88,8 +89,8 @@ type TemplateData struct {
 	Repositories      []string
 }
 
-func (g GenerateFuncCallback) GenerateConfig(repos []string, installationToken string, endpoint string) {
-	config, err := store.GetS3Object(g.Command.CommandOptions.S3Bucket, g.Command.CommandOptions.S3ConfigKey)
+func (g GenerateFuncCallback) GenerateConfig(ctx context.Context, repos []string, installationToken string, endpoint string) {
+	config, err := store.GetS3Object(ctx, g.Command.CommandOptions.S3Bucket, g.Command.CommandOptions.S3ConfigKey)
 	if err != nil {
 		log.Printf("error getting SSM parameter: %v", err)
 		return

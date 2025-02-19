@@ -46,7 +46,7 @@ func generateConfigCommand(cmd *cobra.Command, args []string) {
 		S3ConfigKey:      s3ConfigKey,
 	}
 
-	err = processor.Generate(githubConfig, options)
+	err = processor.Generate(ctx, githubConfig, options)
 	if err != nil {
 		log.Fatal(err)
 	}
