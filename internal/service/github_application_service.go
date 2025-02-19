@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-type enumerateFunc func(*github.Installation, *github.Repository)
-type processFunc func([]string, string, string)
+type enumerateFunc func(context.Context, *github.Installation, *github.Repository)
+type processFunc func(context.Context, []string, string, string)
 
 type RenovateGitHubApplicationService interface {
 	EnumerateInstallationRepositories(processor enumerateFunc)
@@ -31,7 +31,7 @@ func NewRenovateGitHubApplicationService(client *github.Client) *ApplicationServ
 	}
 }
 
-func (a *ApplicationService) EnumerateInstallationRepositories(processor enumerateFunc) error {
+func (a *ApplicationService) EnumerateInstallationRepositories(ctx context.Context, processor enumerateFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
 	for {
 		installations, resp, err := a.Client.Apps.ListInstallations(context.Background(), opts)
@@ -59,7 +59,7 @@ func (a *ApplicationService) EnumerateInstallationRepositories(processor enumera
 				}
 
 				for _, repo := range repos.Repositories {
-					processor(installation, repo)
+					processor(ctx, installation, repo)
 				}
 
 				if repoResp.NextPage == 0 {
@@ -78,7 +78,7 @@ func (a *ApplicationService) EnumerateInstallationRepositories(processor enumera
 	return nil
 }
 
-func (a *ApplicationService) ProcessInstallationRepository(installationId int64, processor processFunc) error {
+func (a *ApplicationService) ProcessInstallationRepository(ctx context.Context, installationId int64, processor processFunc) error {
 	installation, _, err := a.Client.Apps.GetInstallation(context.Background(), installationId)
 
 	if err != nil {
@@ -112,7 +112,7 @@ func (a *ApplicationService) ProcessInstallationRepository(installationId int64,
 	}
 
 	endpoint := fmt.Sprintf("%s://%s%s", a.Client.BaseURL.Scheme, a.Client.BaseURL.Host, a.Client.BaseURL.Path)
-	processor(repoList, installationToken, endpoint)
+	processor(ctx, repoList, installationToken, endpoint)
 
 	return nil
 }

@@ -7,15 +7,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-func GetSecret(secretID string) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func GetSecret(ctx context.Context, secretID string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	svc := secretsmanager.NewFromConfig(cfg)
 
-	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
+	result, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretID),
 	})
 	if err != nil {

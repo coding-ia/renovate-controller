@@ -10,15 +10,15 @@ import (
 	"io"
 )
 
-func GetS3Object(bucketName string, key string) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func GetS3Object(ctx context.Context, bucketName string, key string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to load SDK config, %v", err)
 	}
 
 	s3Client := s3.NewFromConfig(cfg)
 
-	getObjectOutput, err := s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+	getObjectOutput, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(key),
 	})

@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"context"
 	"fmt"
 	internalservice "github.com/coding-ia/renovate-controller/internal/service"
 	"github.com/coding-ia/renovate-controller/service"
@@ -11,11 +12,11 @@ import (
 )
 
 type RenovateTaskFunc interface {
-	CreateTask(installation *github.Installation, repository *github.Repository)
+	CreateTask(ctx context.Context, installation *github.Installation, repository *github.Repository)
 }
 
 type RenovateTask interface {
-	CreateRenovateTasks() error
+	CreateRenovateTasks(ctx context.Context) error
 }
 
 type TaskCommandOptions struct {
@@ -32,6 +33,8 @@ type RunCommandOptions struct {
 	Subnets        []string
 	SecurityGroups []string
 	TaskOptions    TaskCommandOptions
+
+	ctx context.Context
 }
 
 type GitHubConfig struct {
@@ -45,12 +48,12 @@ type RenovateCommand struct {
 	GitHubClient *github.Client
 }
 
-func (r RenovateCommand) CreateRenovateTasks() error {
+func (r RenovateCommand) CreateRenovateTasks(ctx context.Context) error {
 	var renovateTask RenovateTaskFunc
 	renovateTask = r.RunOptions
 
 	svc := internalservice.NewRenovateGitHubApplicationService(r.GitHubClient)
-	err := svc.EnumerateInstallationRepositories(renovateTask.CreateTask)
+	err := svc.EnumerateInstallationRepositories(ctx, renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -58,7 +61,7 @@ func (r RenovateCommand) CreateRenovateTasks() error {
 	return nil
 }
 
-func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
+func Run(ctx context.Context, githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(githubConfig.PrivateKey)
 	if err != nil {
 		return err
@@ -80,7 +83,7 @@ func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 		GitHubClient: client,
 	}
 
-	err = renovateTask.CreateRenovateTasks()
+	err = renovateTask.CreateRenovateTasks(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating renovate tasks: %v", err)
 	}
@@ -88,7 +91,7 @@ func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 	return nil
 }
 
-func (r RunCommandOptions) CreateTask(installation *github.Installation, repository *github.Repository) {
+func (r RunCommandOptions) CreateTask(ctx context.Context, installation *github.Installation, repository *github.Repository) {
 	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
 	installationID := strconv.FormatInt(installation.GetID(), 10)
 
@@ -112,7 +115,7 @@ func (r RunCommandOptions) CreateTask(installation *github.Installation, reposit
 		Repository:     repo,
 		InstallationID: installationID,
 	}
-	_, err := svc.RunTask(taskConfig)
+	_, err := svc.RunTask(ctx, taskConfig)
 	if err != nil {
 		log.Printf("error running task: %v", err)
 		return
