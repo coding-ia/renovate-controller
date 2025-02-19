@@ -57,7 +57,7 @@ func (t *TaskService) RunTask(ctx context.Context, runConfig RunTaskConfig) (*ec
 	var securityGroups []string
 
 	if len(t.Config.AWSVPCConfig.Subnets) == 0 {
-		subnets, err = filterSubnets()
+		subnets, err = filterSubnets(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func (t *TaskService) RunTask(ctx context.Context, runConfig RunTaskConfig) (*ec
 	}
 
 	if len(t.Config.AWSVPCConfig.SecurityGroups) == 0 {
-		securityGroups, err = filterSecurityGroups()
+		securityGroups, err = filterSecurityGroups(ctx)
 	} else {
 		securityGroups = t.Config.AWSVPCConfig.SecurityGroups
 	}
@@ -122,8 +122,8 @@ func (t *TaskService) RunTask(ctx context.Context, runConfig RunTaskConfig) (*ec
 	return runTaskOutput, nil
 }
 
-func filterSubnets() ([]string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func filterSubnets(ctx context.Context) ([]string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func filterSubnets() ([]string, error) {
 		},
 	}
 
-	result, err := ec2Client.DescribeSubnets(context.TODO(), describeSubnetsInput)
+	result, err := ec2Client.DescribeSubnets(ctx, describeSubnetsInput)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +152,8 @@ func filterSubnets() ([]string, error) {
 	return subnetIDs, nil
 }
 
-func filterSecurityGroups() ([]string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func filterSecurityGroups(ctx context.Context) ([]string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func filterSecurityGroups() ([]string, error) {
 		},
 	}
 
-	result, err := ec2Client.DescribeSecurityGroups(context.TODO(), &ec2.DescribeSecurityGroupsInput{
+	result, err := ec2Client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: filters,
 	})
 	if err != nil {
