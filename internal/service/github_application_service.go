@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type enumerateFunc func(*github.Installation, *github.Repository)
+type enumerateFunc func(context.Context, *github.Installation, *github.Repository)
 type processFunc func([]string, string, string)
 
 type RenovateGitHubApplicationService interface {
@@ -59,7 +59,7 @@ func (a *ApplicationService) EnumerateInstallationRepositories(processor enumera
 				}
 
 				for _, repo := range repos.Repositories {
-					processor(installation, repo)
+					processor(context.TODO(), installation, repo)
 				}
 
 				if repoResp.NextPage == 0 {

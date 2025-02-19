@@ -45,8 +45,8 @@ type RunTaskConfig struct {
 	Repository     string
 }
 
-func (t *TaskService) RunTask(runConfig RunTaskConfig) (*ecs.RunTaskOutput, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func (t *TaskService) RunTask(ctx context.Context, runConfig RunTaskConfig) (*ecs.RunTaskOutput, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (t *TaskService) RunTask(runConfig RunTaskConfig) (*ecs.RunTaskOutput, erro
 		},
 	}
 
-	runTaskOutput, err := svc.RunTask(context.TODO(), runTaskInput)
+	runTaskOutput, err := svc.RunTask(ctx, runTaskInput)
 	if err != nil {
 		return nil, err
 	}
