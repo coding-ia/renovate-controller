@@ -31,7 +31,7 @@ func NewRenovateGitHubApplicationService(client *github.Client) *ApplicationServ
 	}
 }
 
-func (a *ApplicationService) EnumerateInstallationRepositories(processor enumerateFunc) error {
+func (a *ApplicationService) EnumerateInstallationRepositories(ctx context.Context, processor enumerateFunc) error {
 	opts := &github.ListOptions{PerPage: 10}
 	for {
 		installations, resp, err := a.Client.Apps.ListInstallations(context.Background(), opts)

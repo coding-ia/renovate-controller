@@ -16,7 +16,7 @@ type RenovateTaskFunc interface {
 }
 
 type RenovateTask interface {
-	CreateRenovateTasks() error
+	CreateRenovateTasks(ctx context.Context) error
 }
 
 type TaskCommandOptions struct {
@@ -48,12 +48,12 @@ type RenovateCommand struct {
 	GitHubClient *github.Client
 }
 
-func (r RenovateCommand) CreateRenovateTasks() error {
+func (r RenovateCommand) CreateRenovateTasks(ctx context.Context) error {
 	var renovateTask RenovateTaskFunc
 	renovateTask = r.RunOptions
 
 	svc := internalservice.NewRenovateGitHubApplicationService(r.GitHubClient)
-	err := svc.EnumerateInstallationRepositories(renovateTask.CreateTask)
+	err := svc.EnumerateInstallationRepositories(ctx, renovateTask.CreateTask)
 	if err != nil {
 		return fmt.Errorf("error while processing repositoriest: %v", err)
 	}
@@ -61,7 +61,7 @@ func (r RenovateCommand) CreateRenovateTasks() error {
 	return nil
 }
 
-func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
+func Run(ctx context.Context, githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(githubConfig.PrivateKey)
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func Run(githubConfig *GitHubConfig, runConfig *RunCommandOptions) error {
 		GitHubClient: client,
 	}
 
-	err = renovateTask.CreateRenovateTasks()
+	err = renovateTask.CreateRenovateTasks(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating renovate tasks: %v", err)
 	}

@@ -67,7 +67,7 @@ func runCommand(cmd *cobra.Command, args []string) {
 		Endpoint:      githubEndpoint,
 	}
 
-	err = processor.Run(githubConfig, runConfig)
+	err = processor.Run(ctx, githubConfig, runConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
