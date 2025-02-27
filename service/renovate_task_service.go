@@ -42,7 +42,6 @@ func NewRenovateTaskService(config ECSConfig) *TaskService {
 type RunTaskConfig struct {
 	ApplicationID  string
 	InstallationID string
-	Repository     string
 }
 
 func (t *TaskService) RunTask(ctx context.Context, runConfig RunTaskConfig) (*ecs.RunTaskOutput, error) {
@@ -103,10 +102,6 @@ func (t *TaskService) RunTask(ctx context.Context, runConfig RunTaskConfig) (*ec
 						{
 							Name:  aws.String("GITHUB_INSTALLATION_ID"),
 							Value: aws.String(runConfig.InstallationID),
-						},
-						{
-							Name:  aws.String("GITHUB_TARGET_REPOSITORY"),
-							Value: aws.String(runConfig.Repository),
 						},
 					},
 				},

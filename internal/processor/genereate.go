@@ -26,11 +26,10 @@ type GenerateCommand struct {
 }
 
 type GenerateCommandOptions struct {
-	InstallationID   int64
-	TargetRepository string
-	S3Bucket         string
-	S3ConfigKey      string
-	Output           string
+	InstallationID int64
+	S3Bucket       string
+	S3ConfigKey    string
+	Output         string
 }
 
 type GenerateFuncCallback struct {
@@ -107,11 +106,9 @@ func (g GenerateFuncCallback) GenerateConfig(ctx context.Context, repos []string
 		InstallationToken: installationToken,
 		Endpoint:          endpoint,
 		Repositories:      repos,
-		Repository:        g.Command.CommandOptions.TargetRepository,
 	}
 
 	log.Printf("Template 'Endpoint' = '%s'", data.Endpoint)
-	log.Printf("Template 'Repository' = '%s'", data.Repository)
 
 	file, err := os.Create(g.Command.CommandOptions.Output)
 	if err != nil {

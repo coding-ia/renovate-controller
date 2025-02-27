@@ -12,7 +12,7 @@ import (
 )
 
 type RenovateTaskFunc interface {
-	CreateTask(ctx context.Context, installation *github.Installation, repository *github.Repository)
+	CreateTask(ctx context.Context, installation *github.Installation)
 }
 
 type RenovateTask interface {
@@ -91,11 +91,10 @@ func Run(ctx context.Context, githubConfig *GitHubConfig, runConfig *RunCommandO
 	return nil
 }
 
-func (r RunCommandOptions) CreateTask(ctx context.Context, installation *github.Installation, repository *github.Repository) {
-	repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
+func (r RunCommandOptions) CreateTask(ctx context.Context, installation *github.Installation) {
 	installationID := strconv.FormatInt(installation.GetID(), 10)
 
-	log.Printf("Creating renovate task for %s", repo)
+	log.Printf("Creating renovate task for %s", *installation.Account.Login)
 
 	config := service.ECSConfig{
 		Cluster:   r.ClusterName,
@@ -112,7 +111,6 @@ func (r RunCommandOptions) CreateTask(ctx context.Context, installation *github.
 
 	taskConfig := service.RunTaskConfig{
 		ApplicationID:  r.TaskOptions.ApplicationID,
-		Repository:     repo,
 		InstallationID: installationID,
 	}
 	_, err := svc.RunTask(ctx, taskConfig)
