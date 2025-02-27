@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type enumerateFunc func(context.Context, *github.Installation, *github.Repository)
+type enumerateFunc func(context.Context, *github.Installation)
 type processFunc func(context.Context, []string, string, string)
 
 type RenovateGitHubApplicationService interface {
@@ -41,32 +41,8 @@ func (a *ApplicationService) EnumerateInstallationRepositories(ctx context.Conte
 		}
 
 		for _, installation := range installations {
-			token, _, err := a.Client.Apps.CreateInstallationToken(context.Background(), installation.GetID(), nil)
-			if err != nil {
-				return err
-			}
-
-			log.Printf("Processing repositories for installation %d", installation.GetID())
-
-			installationToken := token.GetToken()
-			installationClient, _ := CreateClient(installationToken, a.Client.BaseURL.Host)
-
-			repoOpts := &github.ListOptions{PerPage: 10}
-			for {
-				repos, repoResp, err := installationClient.Apps.ListRepos(context.Background(), repoOpts)
-				if err != nil {
-					return err
-				}
-
-				for _, repo := range repos.Repositories {
-					processor(ctx, installation, repo)
-				}
-
-				if repoResp.NextPage == 0 {
-					break
-				}
-				repoOpts.Page = repoResp.NextPage
-			}
+			log.Printf("Processing installation %d", installation.GetID())
+			processor(ctx, installation)
 		}
 
 		if resp.NextPage == 0 {

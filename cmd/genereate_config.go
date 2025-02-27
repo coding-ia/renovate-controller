@@ -20,7 +20,6 @@ func generateConfigCommand(cmd *cobra.Command, args []string) {
 	pemSecretArn := viper.GetString("pem-aws-secret")
 	githubEndpoint := viper.GetString("endpoint")
 	installationId := viper.GetInt64("installationId")
-	targetRepository := viper.GetString("target-repository")
 	s3Bucket := viper.GetString("s3-bucket")
 	s3ConfigKey := viper.GetString("s3-config-key")
 	output := viper.GetString("output")
@@ -39,11 +38,10 @@ func generateConfigCommand(cmd *cobra.Command, args []string) {
 	}
 
 	options := processor.GenerateCommandOptions{
-		InstallationID:   installationId,
-		TargetRepository: targetRepository,
-		Output:           output,
-		S3Bucket:         s3Bucket,
-		S3ConfigKey:      s3ConfigKey,
+		InstallationID: installationId,
+		Output:         output,
+		S3Bucket:       s3Bucket,
+		S3ConfigKey:    s3ConfigKey,
 	}
 
 	err = processor.Generate(ctx, githubConfig, options)
