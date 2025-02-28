@@ -1,4 +1,4 @@
-FROM golang:1.23.6-alpine3.21 AS builder
+FROM golang:1.24.0-alpine3.21 AS builder
 
 ENV GO111MODULE=on \
   CGO_ENABLED=1 \
@@ -19,7 +19,7 @@ RUN go build \
   && strip /bin/renovate-controller \
   && upx -q -9 /bin/renovate-controller
 
-FROM alpine:3.20
+FROM alpine:3.21
 
 COPY --from=builder /bin/renovate-controller /usr/local/renovate-controller
 
