@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/coding-ia/renovate-controller/service"
+	"github.com/coding-ia/renovate-controller/internal/service"
 	"github.com/google/go-github/v63/github"
 	"os"
 	"strconv"
