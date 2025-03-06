@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	internalservice "github.com/coding-ia/renovate-controller/internal/service"
-	"github.com/coding-ia/renovate-controller/service"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v63/github"
 	"log"
@@ -96,20 +95,20 @@ func (r RunCommandOptions) CreateTask(ctx context.Context, installation *github.
 
 	log.Printf("Creating renovate task for %s", *installation.Account.Login)
 
-	config := service.ECSConfig{
+	config := internalservice.ECSConfig{
 		Cluster:   r.ClusterName,
 		Task:      r.TaskDefinition,
 		Container: r.ContainerName,
-		AWSVPCConfig: service.ECSVPCConfig{
+		AWSVPCConfig: internalservice.ECSVPCConfig{
 			Subnets:        r.Subnets,
 			SecurityGroups: r.SecurityGroups,
 			AssignPublicIP: r.AssignPublicIP,
 		},
 	}
 
-	svc := service.NewRenovateTaskService(config)
+	svc := internalservice.NewRenovateTaskService(config)
 
-	taskConfig := service.RunTaskConfig{
+	taskConfig := internalservice.RunTaskConfig{
 		ApplicationID:  r.TaskOptions.ApplicationID,
 		InstallationID: installationID,
 	}

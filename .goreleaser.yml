@@ -1,0 +1,57 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+project_name: renovate-controller
+
+builds:
+  - id: controller-webhook
+    main: ./cmd/controller-webhook/main.go
+    binary: bootstrap
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - '-s -w'
+
+  - id: controller
+    main: ./cmd/controller/main.go
+    binary: controller
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - '-s -w'
+
+archives:
+  - id: lambda_archive
+    name_template: "{{ .ProjectName }}-webhook-{{ .Os }}-{{ .Arch }}"
+    files:
+      - ./bootstrap
+    formats: ['zip']
+
+  - id: server_archive
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    files:
+      - ./controller
+    formats: ['zip']
+
+release:
+  draft: true
+
+changelog:
+  disable: true

@@ -1,11 +1,10 @@
-package cmd
+package controller
 
 import (
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
 	"os"
-
-	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
