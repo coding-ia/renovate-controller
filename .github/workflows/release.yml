@@ -10,6 +10,36 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up GO
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          check-latest: true
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload assets
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/*
+
   build-and-push-image:
     runs-on: ubuntu-latest
 
