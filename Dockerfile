@@ -15,7 +15,7 @@ COPY . .
 
 RUN go build \
   -ldflags "-s -w -extldflags '-static'" \
-  -o /bin/renovate-controller .\cmd\controller\main.go \
+  -o /bin/renovate-controller ./cmd/controller/main.go \
   && strip /bin/renovate-controller \
   && upx -q -9 /bin/renovate-controller
 
