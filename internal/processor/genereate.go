@@ -13,7 +13,7 @@ import (
 )
 
 type GenerateTaskFunc interface {
-	GenerateConfig(ctx context.Context, repos []string, installationToken string, endpoint string)
+	GenerateConfig(ctx context.Context, organization string, repos []string, installationToken string, endpoint string)
 }
 
 type GenerateTask interface {
@@ -84,11 +84,11 @@ func Generate(ctx context.Context, githubConfig *GitHubConfig, options GenerateC
 type TemplateData struct {
 	InstallationToken string
 	Endpoint          string
-	Repository        string
+	Organization      string
 	Repositories      []string
 }
 
-func (g GenerateFuncCallback) GenerateConfig(ctx context.Context, repos []string, installationToken string, endpoint string) {
+func (g GenerateFuncCallback) GenerateConfig(ctx context.Context, organization string, repos []string, installationToken string, endpoint string) {
 	config, err := store.GetS3Object(ctx, g.Command.CommandOptions.S3Bucket, g.Command.CommandOptions.S3ConfigKey)
 	if err != nil {
 		log.Printf("error getting SSM parameter: %v", err)
@@ -105,6 +105,7 @@ func (g GenerateFuncCallback) GenerateConfig(ctx context.Context, repos []string
 	data := TemplateData{
 		InstallationToken: installationToken,
 		Endpoint:          endpoint,
+		Organization:      organization,
 		Repositories:      repos,
 	}
 
