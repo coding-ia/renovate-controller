@@ -39,15 +39,19 @@ builds:
 
 archives:
   - id: lambda_archive
-    name_template: "{{ .ProjectName }}-webhook-{{ .Os }}-{{ .Arch }}"
+    builds:
+      - controller-webhook
     files:
-      - ./bootstrap
+      - ./dist/controller-webhook_{{ .Os }}_{{ .Arch }}*/bootstrap
+    name_template: "{{ .ProjectName }}-webhook-{{ .Os }}-{{ .Arch }}"
     formats: ['zip']
 
   - id: server_archive
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    builds:
+      - controller
     files:
-      - ./controller
+      - ./dist/controller_{{ .Os }}_{{ .Arch }}*/controller
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
     formats: ['zip']
 
 release:
