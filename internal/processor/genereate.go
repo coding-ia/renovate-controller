@@ -6,7 +6,7 @@ import (
 	"github.com/coding-ia/renovate-controller/internal/service"
 	"github.com/coding-ia/renovate-controller/internal/store"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/go-github/v63/github"
+	"github.com/google/go-github/v69/github"
 	"log"
 	"os"
 	"text/template"
