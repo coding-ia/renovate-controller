@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/go-github/v63/github"
+	"github.com/google/go-github/v69/github"
 	"golang.org/x/oauth2"
 	"log"
 	"net/url"
